@@ -1,5 +1,5 @@
 Bootstrap: debootstrap
-OSVersion: bionic
+OSVersion: trusty
 MirrorURL: http://us.archive.ubuntu.com/ubuntu/
 
 %files
