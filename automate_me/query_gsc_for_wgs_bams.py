@@ -4,7 +4,6 @@ import os
 import sys
 import time
 import pandas as pd
-import requests
 from django.core.serializers.json import DjangoJSONEncoder
 from utils import gsc
 
@@ -35,7 +34,7 @@ merge_bam_path_template = {
 }
 
 def get_merge_bam_path(library_type, data_path, library_name, num_lanes, compression=None):
-    lane_pluralize = ('', 's')[num_lanes > 1]
+    lane_pluralize = 's' if num_lanes > 1 else ''
     bam_path = merge_bam_path_template[library_type].format(
         data_path=data_path,
         library_name=library_name,
@@ -95,7 +94,7 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
 
     json_list = []
 
-    # ASSUMPTION: GSC stored files are pathed from root 
+    # ASSUMPTION: GSC stored files are pathed from root
     bam_filename_override = bam_path
     bai_filename_override = bai_path
 
@@ -123,7 +122,7 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
         filename_override=bam_filename_override,
         model='FileInstance',
     )
-    json_list.append(bam_instance)   
+    json_list.append(bam_instance)
 
     # BAI files are only found with uncompressed BAMs (and even then not
     # always)
@@ -230,7 +229,7 @@ def query_gsc_library(json_filename, libraries, skip_file_import=False, skip_old
     storage = dict(
         name='gsc',
     )
-    # TODO: check that all GSC file instances have filename overrides 
+    # TODO: check that all GSC file instances have filename overrides
 
     for library_name in libraries:
         library_infos = gsc_api.query('library?name={}'.format(library_name))
@@ -437,6 +436,8 @@ if __name__ == '__main__':
     # Convert the date to the format we want
     args['skip_older_than'] = valid_date(args['skip_older_than'])
 
-    query_gsc_library(args['json_data'], args['library_ids'],
+    query_gsc_library(
+        args['json_data'],
+        args['library_ids'],
         skip_file_import=args['skip_file_import'],
         skip_older_than=args['skip_older_than'])
