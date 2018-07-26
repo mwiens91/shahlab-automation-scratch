@@ -1,14 +1,13 @@
-import argparse
+import datetime
+import json
 import os
 import sys
-import datetime
 import time
-import pysam
-import json
 import azure.storage.blob
-import pandas as pd
 from django.core.serializers.json import DjangoJSONEncoder
-from utils.colossus import *
+import pandas as pd
+import pysam
+from utils.colossus import get_colossus_sublibraries_from_library_id
 
 
 def get_bam_ref_genome(bam_header):
@@ -260,7 +259,7 @@ def import_dlp_realign_bam(storage, bam_info, bai_info, bam_header):
 if __name__ == '__main__':
     args = json.loads(sys.argv[1])
 
-    json_list = import_dlp_realign_bams(
+    import_dlp_realign_bams(
         args['json_data'],
         args['storage_name'],
         args['storage_type'],

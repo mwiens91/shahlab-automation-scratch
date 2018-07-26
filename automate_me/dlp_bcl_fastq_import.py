@@ -1,15 +1,11 @@
 import argparse
-import hashlib
-import collections
-import django
-import time
+import json
 import os
 import re
-import json
-import pandas as pd
+import time
 from django.core.serializers.json import DjangoJSONEncoder
-
-from utils.colossus import *
+import pandas as pd
+from utils.colossus import get_colossus_sublibraries_from_library_id
 
 
 # Hard coded BRC details
@@ -76,7 +72,7 @@ def get_fastq_info(output_dir):
     fastq_filenames = filter(lambda x: "Undetermined" not in x, fastq_filenames)
 
     # Check that the path actually has fastq files
-    if len(fastq_filenames) == 0:
+    if not fastq_filenames:
         raise Exception("no fastq files in output directory {}".format(output_dir))
 
     # Cell info keyed by dlp library id
@@ -218,7 +214,8 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
 
     load_brc_fastqs(
-        args['json_data'], args['flowcell_id'],
-        args['storage_name'], args['storage_directory'],
+        args['json_data'],
+        args['flowcell_id'],
+        args['storage_name'],
+        args['storage_directory'],
         args['output_dir'])
-

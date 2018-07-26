@@ -15,7 +15,7 @@ def get_colossus_sublibraries_from_library_id(library_id):
         if r.status_code != 200:
             raise Exception('Returned {}: {}'.format(r.status_code, r.reason))
 
-        if len(r.json()['results']) == 0:
+        if not r.json()['results']:
             raise Exception('No sublibrary results for {}'.format(sublibrary_url))
 
         sublibraries.extend(r.json()['results'])
@@ -37,7 +37,7 @@ def query_libraries_by_library_id(library_id):
 
     results = r.json()['results']
 
-    if len(results) == 0:
+    if not results:
         raise Exception('No entries for library {}'.format(library_id))
 
     if len(results) > 1:

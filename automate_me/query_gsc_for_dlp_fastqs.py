@@ -1,14 +1,15 @@
-import os
-import requests
 import argparse
-import time
 import collections
-import string
-import pandas as pd
 import json
-
+import os
+import string
+import time
 from django.core.serializers.json import DjangoJSONEncoder
-from utils.colossus import *
+import pandas as pd
+from utils.colossus import (
+    get_colossus_sublibraries_from_library_id,
+    query_libraries_by_library_id,)
+from utils import gsc
 
 
 solexa_run_type_map = {
@@ -16,7 +17,7 @@ solexa_run_type_map = {
 
 
 def reverse_complement(sequence):
-    return str(sequence[::-1]).translate(string.maketrans('ACTGactg','TGACtgac'))
+    return str(sequence[::-1]).translate(string.maketrans('ACTGactg', 'TGACtgac'))
 
 
 def decode_raw_index_sequence(raw_index_sequence, instrument, rev_comp_override):
@@ -94,7 +95,7 @@ def query_gsc_dlp_paired_fastqs(json_filename, dlp_library_id, gsc_library_id):
     cell_samples = query_colossus_dlp_cell_info(dlp_library_id)
     rev_comp_overrides = query_colossus_dlp_rev_comp_override(dlp_library_id)
 
-    gsc_api = shahlab_automation.gsc.GSCAPI()
+    gsc_api = gsc.GSCAPI()
 
     json_list = []
 
@@ -112,7 +113,7 @@ def query_gsc_dlp_paired_fastqs(json_filename, dlp_library_id, gsc_library_id):
         fastq_path = fastq_info['data_path']
         flowcell_code = fastq_info['libcore']['run']['flowcell']['lims_flowcell_code']
         lane_number = fastq_info['libcore']['run']['lane_number']
-        sequencing_instrument = shahlab_automation.gsc.get_sequencing_instrument(fastq_info['libcore']['run']['machine'])
+        sequencing_instrument = gsc.get_sequencing_instrument(fastq_info['libcore']['run']['machine'])
         solexa_run_type = fastq_info['libcore']['run']['solexarun_type']
 
         primer_id = fastq_info['libcore']['primer_id']
@@ -138,7 +139,7 @@ def query_gsc_dlp_paired_fastqs(json_filename, dlp_library_id, gsc_library_id):
         if not passed:
             continue
 
-        # ASSUMPTION: GSC stored files are pathed from root 
+        # ASSUMPTION: GSC stored files are pathed from root
         fastq_filename_override = fastq_path
 
         # ASSUMPTION: meaningful path starts at library_name
@@ -233,6 +234,7 @@ if __name__ == '__main__':
     parser.add_argument('gsc_library_id')
     args = vars(parser.parse_args())
 
-    query_gsc_dlp_paired_fastqs(args['json_data'],
-        args['dlp_library_id'], args['gsc_library_id'])
-
+    query_gsc_dlp_paired_fastqs(
+        args['json_data'],
+        args['dlp_library_id'],
+        args['gsc_library_id'])
