@@ -4,6 +4,7 @@ MirrorURL: http://us.archive.ubuntu.com/ubuntu/
 
 %files
     automate_me/* .
+    requirements.txt .
 
 %post
     mkdir /logs

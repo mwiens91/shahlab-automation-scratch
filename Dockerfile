@@ -9,6 +9,7 @@ WORKDIR /shahlab_automation
 
 # Copy the current directory contents into the container at /app
 ADD automate_me/* /shahlab_automation
+ADD requirements.txt /shahlab_automation
 
 # Install requirements
 RUN pip install -r requirements.txt
