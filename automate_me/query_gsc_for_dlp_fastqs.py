@@ -1,15 +1,15 @@
-import argparse
 import collections
 import json
 import os
 import string
+import sys
 import time
-from django.core.serializers.json import DjangoJSONEncoder
 import pandas as pd
 from utils.colossus import (
     get_colossus_sublibraries_from_library_id,
     query_libraries_by_library_id,)
 from utils import gsc
+from utils import tantalus
 
 
 solexa_run_type_map = {
@@ -89,13 +89,14 @@ filename_pattern_map = {
 }
 
 
-def query_gsc_dlp_paired_fastqs(json_filename, dlp_library_id, gsc_library_id):
+def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
     storage = dict(name='gsc')
 
     cell_samples = query_colossus_dlp_cell_info(dlp_library_id)
     rev_comp_overrides = query_colossus_dlp_rev_comp_override(dlp_library_id)
 
     gsc_api = gsc.GSCAPI()
+    tantalus_api = tantalus.TantalusApi()
 
     json_list = []
 
@@ -223,18 +224,14 @@ def query_gsc_dlp_paired_fastqs(json_filename, dlp_library_id, gsc_library_id):
 
         json_list.append(fastq_dataset)
 
-    with open(json_filename, 'w') as f:
-        json.dump(json_list, f, indent=4, sort_keys=True, cls=DjangoJSONEncoder)
+    # Post to Tantalus
+    tantalus_api.read_models(json_list)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('json_data')
-    parser.add_argument('dlp_library_id')
-    parser.add_argument('gsc_library_id')
-    args = vars(parser.parse_args())
+    # Parse the incoming arguments
+    args = json.loads(sys.argv[1])
 
     query_gsc_dlp_paired_fastqs(
-        args['json_data'],
         args['dlp_library_id'],
-        args['gsc_library_id'])
+        args['gsc_library_id'],)
