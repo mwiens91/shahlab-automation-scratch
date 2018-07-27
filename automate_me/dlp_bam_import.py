@@ -4,9 +4,9 @@ import os
 import sys
 import time
 import azure.storage.blob
-from django.core.serializers.json import DjangoJSONEncoder
 import pandas as pd
 import pysam
+from utils import tantalus
 from utils.colossus import get_colossus_sublibraries_from_library_id
 
 
@@ -121,8 +121,10 @@ def get_created_time_blob(blob_service, container, blobname):
     return created_time
 
 
-def import_dlp_realign_bams(json_filename, storage_name, storage_type, bam_filenames, **kwargs):
+def import_dlp_realign_bams(storage_name, storage_type, bam_filenames, **kwargs):
     metadata = []
+
+    tantalus_api = tantalus.TantalusApi()
 
     if storage_type == 'blob':
         for bam_filename in bam_filenames:
@@ -133,8 +135,8 @@ def import_dlp_realign_bams(json_filename, storage_name, storage_type, bam_filen
     else:
         raise ValueError('unsupported storage type {}'.format(storage_type))
 
-    with open(json_filename, 'w') as f:
-        json.dump(metadata, f, indent=4, sort_keys=True, cls=DjangoJSONEncoder)
+    # Post to Tantalus
+    tantalus_api.read_models(metadata)
 
 
 def import_dlp_realign_bam_blob(storage_name, bam_filename, container_name):
@@ -260,9 +262,8 @@ if __name__ == '__main__':
     args = json.loads(sys.argv[1])
 
     import_dlp_realign_bams(
-        args['json_data'],
         args['storage_name'],
         args['storage_type'],
         args['bam_filenames'],
-        server_storage_directory=args.get('server_storage_directory'),
-        blob_container_name=args.get('blob_container_name'))
+        server_storage_directory=args['server_storage_directory'],
+        blob_container_name=args['blob_container_name'])

@@ -1,10 +1,10 @@
-import argparse
 import json
 import os
 import re
+import sys
 import time
-from django.core.serializers.json import DjangoJSONEncoder
 import pandas as pd
+from utils import tantalus
 from utils.colossus import get_colossus_sublibraries_from_library_id
 
 
@@ -31,7 +31,10 @@ def query_colossus_dlp_cell_info(library_id):
     return row_column_map
 
 
-def load_brc_fastqs(json_filename, flowcell_id, storage_name, storage_directory, output_dir):
+def load_brc_fastqs(flowcell_id, storage_name, storage_directory, output_dir):
+    # Connect to Tantalus API
+    tantalus_api = tantalus.TantalusApi()
+
     # Check for .. in file path
     if ".." in output_dir:
         raise Exception("Invalid path for output_dir. \'..\' detected")
@@ -48,8 +51,8 @@ def load_brc_fastqs(json_filename, flowcell_id, storage_name, storage_directory,
 
     json_list = create_models(fastq_info, flowcell_id, storage_name, storage_directory)
 
-    with open(json_filename, 'w') as f:
-        json.dump(json_list, f, indent=4, sort_keys=True, cls=DjangoJSONEncoder)
+    # Post to Tantalus
+    tantalus_api.read_models(json_list)
 
 
 def _update_info(info, key, value):
@@ -205,16 +208,11 @@ def create_models(fastq_info, flowcell_id, storage_name, storage_directory):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('json_data')
-    parser.add_argument('flowcell_id')
-    parser.add_argument('storage_name')
-    parser.add_argument('storage_directory')
-    parser.add_argument('output_dir')
-    args = vars(parser.parse_args())
+
+    # Parse the incoming arguments
+    args = json.loads(sys.argv[1])
 
     load_brc_fastqs(
-        args['json_data'],
         args['flowcell_id'],
         args['storage_name'],
         args['storage_directory'],
