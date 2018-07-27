@@ -2,8 +2,6 @@ Bootstrap: debootstrap
 OSVersion: xenial
 MirrorURL: http://us.archive.ubuntu.com/ubuntu/
 
-%
-
 %files
     automate_me /shahlab_automation
     requirements.txt /shahlab_automation/
