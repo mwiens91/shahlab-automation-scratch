@@ -1,5 +1,5 @@
 Bootstrap: debootstrap
-OSVersion: trusty
+OSVersion: xenial
 MirrorURL: http://us.archive.ubuntu.com/ubuntu/
 
 %files
