@@ -4,8 +4,8 @@ import os
 import sys
 import time
 import pandas as pd
-from django.core.serializers.json import DjangoJSONEncoder
 from utils import gsc
+from utils import tantalus
 
 
 def convert_time(a):
@@ -216,7 +216,7 @@ def add_gsc_bam_read_groups(sample, library, lane_infos):
     return json_list
 
 
-def query_gsc_library(json_filename, libraries, skip_file_import=False, skip_older_than=None):
+def query_gsc_library(libraries, skip_file_import=False, skip_older_than=None):
     """
     Take a list of library names as input.
     """
@@ -224,6 +224,7 @@ def query_gsc_library(json_filename, libraries, skip_file_import=False, skip_old
     json_list = []
 
     gsc_api = gsc.GSCAPI()
+    tantalus_api = tantalus.TantalusApi()
 
     # ASSUMPTION: GSC stored files are pathed from root
     storage = dict(
@@ -417,9 +418,8 @@ def query_gsc_library(json_filename, libraries, skip_file_import=False, skip_old
                     else:
                         raise Exception('missing lane bam file {}'.format(bam_path))
 
-
-    with open(json_filename, 'w') as f:
-        json.dump(json_list, f, indent=4, sort_keys=True, cls=DjangoJSONEncoder)
+    # Post to Tantalus
+    tantalus_api.read_models(json_list)
 
 
 def valid_date(s):
@@ -437,7 +437,6 @@ if __name__ == '__main__':
     args['skip_older_than'] = valid_date(args['skip_older_than'])
 
     query_gsc_library(
-        args['json_data'],
         args['library_ids'],
         skip_file_import=args['skip_file_import'],
         skip_older_than=args['skip_older_than'])
