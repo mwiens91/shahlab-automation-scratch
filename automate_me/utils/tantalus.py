@@ -7,6 +7,7 @@ scripts.
 
 import json
 import os
+import sys
 import requests
 
 
@@ -46,5 +47,9 @@ class TantalusApi(object):
         r = self.session.post(
             endpoint_url,
             data=json.dumps(json_list))
-
-        assert r.status_code == 200
+        try:
+            assert r.status_code == 200
+        except AssertionError:
+            print("An HTTP request to %s failed with status %s." %
+                  (endpoint_url, r.status_code),
+                  file=sys.stderr,)
