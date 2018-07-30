@@ -48,7 +48,8 @@ class TantalusApi(object):
             endpoint_url,
             json=json_list,)
         try:
-            assert r.status_code == 200
+            # Ensure that the request was successful
+            assert 200 <= r.status_code < 300
         except AssertionError:
             print("An HTTP request to %s failed with status %s." %
                   (endpoint_url, r.status_code),
