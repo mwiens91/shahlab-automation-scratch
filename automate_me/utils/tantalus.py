@@ -5,6 +5,7 @@ subset of Tantalus API features to meet the needs of the automation
 scripts.
 """
 
+from __future__ import print_function
 import json
 import os
 import sys
