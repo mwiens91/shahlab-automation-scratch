@@ -41,10 +41,10 @@ class TantalusApi(object):
         """POST to the read_models endpoint."""
         endpoint_url = self.join_urls(
             self.base_api_url,
-            'backend/read_models/',)
+            '/dataset/add/',)
 
         r = self.session.post(
             endpoint_url,
-            data={'json_list': json.dumps(json_list)})
+            data=json.dumps(json_list))
 
         assert r.status_code == 200
