@@ -6,7 +6,6 @@ scripts.
 """
 
 from __future__ import print_function
-import json
 import os
 import sys
 import requests
@@ -47,7 +46,7 @@ class TantalusApi(object):
 
         r = self.session.post(
             endpoint_url,
-            data=json.dumps(json_list))
+            json=json_list,)
         try:
             assert r.status_code == 200
         except AssertionError:
