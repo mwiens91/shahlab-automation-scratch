@@ -37,7 +37,7 @@ class TantalusApi(object):
     @staticmethod
     def join_urls(*pieces):
         """Join pieces of an URL together safely."""
-        return '/'.join(s.strip('/') for s in pieces)
+        return '/'.join(s.strip('/') for s in pieces) + '/'
 
     def read_models(self, json_list):
         """POST to the read_models endpoint."""
