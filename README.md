@@ -1,4 +1,5 @@
 [![https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg](https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg)](https://singularity-hub.org/collections/1334)
+![Python version](https://img.shields.io/badge/python-2-blue.svg)
 
 # shahlab-automation-scratch
 
