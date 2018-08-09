@@ -23,7 +23,7 @@ environment variables defined:
 + GSC_API_USERNAME
 + GSC_API_PASSWORD
 
-Additionally, the (dlp_bam_import.py)[automate_me/dlp_bam_import.py]
+Additionally, the [dlp_bam_import.py](automate_me/dlp_bam_import.py)
 script needs the following environment variables defined:
 
 + AZURE_STORAGE_ACCOUNT
