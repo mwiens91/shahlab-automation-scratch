@@ -42,7 +42,7 @@ class TantalusApi(object):
         """POST to the read_models endpoint."""
         endpoint_url = self.join_urls(
             self.base_api_url,
-            '/dataset/add/',)
+            '/sequence_dataset_add/',)
 
         r = self.session.post(
             endpoint_url,
