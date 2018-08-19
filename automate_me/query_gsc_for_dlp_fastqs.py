@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import collections
 import json
 import os
 import string
@@ -10,12 +9,13 @@ import pandas as pd
 from utils.colossus import (
     get_colossus_sublibraries_from_library_id,
     query_libraries_by_library_id,)
-from utils import gsc
-from utils import tantalus
+from utils.dlp import create_sequence_dataset_models, fastq_paired_end_check
+from utils.gsc import get_sequencing_instrument, GSCAPI
+from utils.tantalus import TantalusApi
 
 
 solexa_run_type_map = {
-    'Paired': 'PAIRED'}
+    'Paired': 'P'}
 
 
 def reverse_complement(sequence):
@@ -84,27 +84,26 @@ filename_pattern_map = {
     '_1_*.concat_chastity_passed.fastq.gz': (1, True),
     '_1_chastity_passed.fastq.gz': (1, True),
     '_1_chastity_failed.fastq.gz': (1, False),
+    '_1_*bp.concat.fastq.gz': (1, True),
     '_2.fastq.gz': (2, True),
     '_2_*.concat_chastity_passed.fastq.gz': (2, True),
     '_2_chastity_passed.fastq.gz': (2, True),
     '_2_chastity_failed.fastq.gz': (2, False),
+    '_2_*bp.concat.fastq.gz': (2, True),
 }
 
 
 def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
-    storage = dict(name='gsc')
+    #storage = dict(name='gsc')
 
     cell_samples = query_colossus_dlp_cell_info(dlp_library_id)
     rev_comp_overrides = query_colossus_dlp_rev_comp_override(dlp_library_id)
 
-    gsc_api = gsc.GSCAPI()
-    tantalus_api = tantalus.TantalusApi()
-
-    json_list = []
+    gsc_api = GSCAPI()
 
     fastq_infos = gsc_api.query('fastq?parent_library={}'.format(gsc_library_id))
 
-    paired_fastq_infos = collections.defaultdict(dict)
+    fastq_file_info = []
 
     for fastq_info in fastq_infos:
         if fastq_info['status'] != 'production':
@@ -114,10 +113,11 @@ def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
             continue
 
         fastq_path = fastq_info['data_path']
-        flowcell_code = fastq_info['libcore']['run']['flowcell']['lims_flowcell_code']
+        flowcell_id = fastq_info['libcore']['run']['flowcell']['lims_flowcell_code']
         lane_number = fastq_info['libcore']['run']['lane_number']
-        sequencing_instrument = gsc.get_sequencing_instrument(fastq_info['libcore']['run']['machine'])
+        sequencing_instrument = get_sequencing_instrument(fastq_info['libcore']['run']['machine'])
         solexa_run_type = fastq_info['libcore']['run']['solexarun_type']
+        read_type = solexa_run_type_map[solexa_run_type]
 
         primer_id = fastq_info['libcore']['primer_id']
         primer_info = gsc_api.query('primer/{}'.format(primer_id))
@@ -125,7 +125,7 @@ def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
 
         print 'loading fastq', fastq_info['id'], 'index', raw_index_sequence, fastq_path
 
-        flowcell_lane = flowcell_code
+        flowcell_lane = flowcell_id
         if lane_number is not None:
             flowcell_lane = flowcell_lane + '_' + str(lane_number)
 
@@ -156,84 +156,50 @@ def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
             raise Exception('unable to find index {} for flowcell lane {} for library {}'.format(
                 index_sequence, flowcell_lane, dlp_library_id))
 
-        sample = dict(
+        fastq_file_info.append(dict(
+            dataset_type='FQ',
             sample_id=cell_sample_id,
-        )
-
-        library = dict(
             library_id=dlp_library_id,
-            library_type='SINGLE_CELL_WGS',
-            index_format='DUAL_INDEX',
-        )
-
-        lane = dict(
-            flowcell_id=flowcell_code,
-            lane_number=lane_number,
-            sequencing_centre='GSC',
-            sequencing_instrument=sequencing_instrument,
-            read_type=solexa_run_type_map[solexa_run_type],
-        )
-
-        read_group = dict(
-            sample=sample,
-            dna_library=library,
-            index_sequence=index_sequence,
-            sequence_lane=lane,
-            sequencing_library_id=gsc_library_id,
-        )
-
-        fastq_file = dict(
+            library_type='SC_WGS',
+            index_format='D',
+            sequence_lanes=[dict(
+                flowcell_id=flowcell_id,
+                lane_number=lane_number,
+                sequencing_centre='GSC',
+                sequencing_instrument=sequencing_instrument,
+                read_type=read_type,
+            )],
             size=os.path.getsize(fastq_path),
             created=pd.Timestamp(time.ctime(os.path.getmtime(fastq_path)), tz='Canada/Pacific'),
             file_type='FQ',
             read_end=read_end,
+            index_sequence=index_sequence,
             compression='GZIP',
             filename=fastq_filename,
-        )
-
-        fastq_instance = dict(
-            storage=storage,
-            file_resource=fastq_file,
             filename_override=fastq_filename_override,
-            model='FileInstance',
-        )
+        ))
 
-        json_list.append(fastq_instance)
+    storage_name = 'gsc'
 
-        fastq_id = (index_sequence, flowcell_code, lane_number)
+    fastq_paired_end_check(fastq_file_info)
 
-        if read_end in paired_fastq_infos[fastq_id]:
-            raise Exception('duplicate fastq {} end {} for {}'.format(read_end, fastq_info['id'], fastq_id))
+    json_list = create_sequence_dataset_models(fastq_file_info, storage_name)
 
-        paired_fastq_infos[fastq_id][read_end] = {
-            'fastq_file':fastq_file,
-            'read_group':read_group,
-        }
-
-    for fastq_id, paired_fastq_info in paired_fastq_infos.iteritems():
-        if set(paired_fastq_info.keys()) != set([1, 2]):
-            raise Exception('expected read end 1, 2 for {}, got {}'.format(fastq_id, paired_fastq_info.keys()))
-
-        if paired_fastq_info[1]['read_group'].items() != paired_fastq_info[2]['read_group'].items():
-            raise Exception('expected same lane for {}'.format(fastq_id))
-
-        fastq_dataset = dict(
-            reads_1_file=paired_fastq_info[1]['fastq_file'],
-            reads_2_file=paired_fastq_info[2]['fastq_file'],
-            read_groups=[paired_fastq_info[1]['read_group']],
-            model='PairedEndFastqFiles',
-        )
-
-        json_list.append(fastq_dataset)
-
-    # Post to Tantalus
-    tantalus_api.read_models(json_list)
+    return json_list
 
 
 if __name__ == '__main__':
     # Parse the incoming arguments
     args = json.loads(sys.argv[1])
 
-    query_gsc_dlp_paired_fastqs(
+    # Connect to the Tantalus API (this requires appropriate environment
+    # variables defined)
+    tantalus_api = TantalusApi()
+
+    # Query GSC for FastQs
+    json_to_post = query_gsc_dlp_paired_fastqs(
         args['dlp_library_id'],
         args['gsc_library_id'],)
+
+    # Post data to Tantalus
+    tantalus_api.read_models(json_to_post)
