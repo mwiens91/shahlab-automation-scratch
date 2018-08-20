@@ -254,4 +254,6 @@ if __name__ == '__main__':
         args['blob_container_name'])
 
     # Post data to Tantalus
-    tantalus_api.read_models(json_list)
+    tantalus_api.sequence_dataset_add(
+        model_dictionaries=json_list,
+        tag_name=args['tag_name'])

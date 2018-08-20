@@ -38,15 +38,25 @@ class TantalusApi(object):
         """Join pieces of an URL together safely."""
         return '/'.join(s.strip('/') for s in pieces) + '/'
 
-    def read_models(self, json_list):
-        """POST to the read_models endpoint."""
+    def sequence_dataset_add(self, model_dictionaries, tag_name=None):
+        """POST to the sequence_dataset_add endpoint.
+
+        Args:
+            model_dictionaries: A list of dictionaries containing
+                information about a model to create.
+            tag_name: An optional string (or None) containing the name
+                of the tag to associate with the model instances
+                represented in the model_dictionaries.
+        """
         endpoint_url = self.join_urls(
             self.base_api_url,
             '/sequence_dataset_add/',)
 
         r = self.session.post(
             endpoint_url,
-            json=json_list,)
+            json={"models_dictionaries": model_dictionaries,
+                  "tag": tag_name},)
+
         try:
             # Ensure that the request was successful
             assert 200 <= r.status_code < 300

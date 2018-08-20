@@ -157,4 +157,6 @@ if __name__ == '__main__':
         args['output_dir'])
 
     # Post data to Tantalus
-    tantalus_api.read_models(json_to_post)
+    tantalus_api.sequence_dataset_add(
+        model_dictionaries=json_list,
+        tag_name=args['tag_name'])
