@@ -54,7 +54,7 @@ class TantalusApi(object):
 
         r = self.session.post(
             endpoint_url,
-            json={"models_dictionaries": model_dictionaries,
+            json={"model_dictionaries": model_dictionaries,
                   "tag": tag_name},)
 
         try:
