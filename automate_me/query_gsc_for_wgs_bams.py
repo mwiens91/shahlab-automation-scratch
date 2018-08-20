@@ -209,6 +209,7 @@ def add_gsc_bam_lanes(sample, library, lane_infos):
             sequencing_instrument=lane_info['sequencing_instrument'],
             read_type=lane_info['read_type'],
             dna_library=library,
+            model='SequencingLane',
         )
 
         json_list.append(lane)
