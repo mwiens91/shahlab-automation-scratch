@@ -247,7 +247,7 @@ if __name__ == '__main__':
     tantalus_api = TantalusApi()
 
     # Import DLP BAMs
-    json_list = import_dlp_realign_bams(
+    json_to_post = import_dlp_realign_bams(
         args['storage_name'],
         args['storage_type'],
         args['bam_filenames'],
@@ -255,5 +255,5 @@ if __name__ == '__main__':
 
     # Post data to Tantalus
     tantalus_api.sequence_dataset_add(
-        model_dictionaries=json_list,
+        model_dictionaries=json_to_post,
         tag_name=args['tag_name'])

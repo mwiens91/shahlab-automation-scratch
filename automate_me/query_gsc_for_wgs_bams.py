@@ -446,5 +446,5 @@ if __name__ == '__main__':
 
     # Post data to Tantalus
     tantalus_api.sequence_dataset_add(
-        model_dictionaries=json_list,
+        model_dictionaries=json_to_post,
         tag_name=args['tag_name'])
