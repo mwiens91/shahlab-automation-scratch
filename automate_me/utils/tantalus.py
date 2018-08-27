@@ -6,8 +6,10 @@ scripts.
 """
 
 from __future__ import print_function
+import json
 import os
 import sys
+from django.core.serializers.json import DjangoJSONEncoder
 import requests
 
 
@@ -52,10 +54,14 @@ class TantalusApi(object):
             self.base_api_url,
             '/sequence_dataset_add/',)
 
+        payload = json.dumps(
+            {"model_dictionaries": model_dictionaries,
+             "tag": tag_name},
+            cls=DjangoJSONEncoder)
+
         r = self.session.post(
             endpoint_url,
-            json={"model_dictionaries": model_dictionaries,
-                  "tag": tag_name},)
+            data=payload,)
 
         try:
             # Ensure that the request was successful
