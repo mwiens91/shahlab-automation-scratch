@@ -30,6 +30,9 @@ class TantalusApi(object):
             os.environ.get('TANTALUS_API_USERNAME'),
             os.environ.get('TANTALUS_API_PASSWORD'),)
 
+        # Tell Tantalus we're sending JSON
+        self.headers.update({'content-type': 'application/json'})
+
         # Record the base API URL
         self.base_api_url = os.environ.get(
             'TANTALUS_API_URL',
