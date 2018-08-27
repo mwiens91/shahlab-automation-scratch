@@ -115,7 +115,6 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
         size=os.path.getsize(bam_path),
         created=pd.Timestamp(time.ctime(os.path.getmtime(bam_path)), tz='Canada/Pacific'),
         file_type='BAM',
-        read_end=None,
         compression='SPEC' if is_spec else 'UNCOMPRESSED',
         filename=bam_filename,
     )
@@ -135,7 +134,6 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
             size=os.path.getsize(bai_path),
             created=pd.Timestamp(time.ctime(os.path.getmtime(bai_path)), tz='Canada/Pacific'),
             file_type='BAI',
-            read_end=None,
             compression='UNCOMPRESSED',
             filename=bai_filename,
         )
