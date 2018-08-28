@@ -201,7 +201,13 @@ if __name__ == '__main__':
         args['dlp_library_id'],
         args['gsc_library_id'],)
 
+    # Get the tag name if it was passed in
+    try:
+        tag_name = args['tag_name']
+    except KeyError:
+        tag_name = None
+
     # Post data to Tantalus
     tantalus_api.sequence_dataset_add(
         model_dictionaries=json_to_post,
-        tag_name=args['tag_name'])
+        tag_name=tag_name)
