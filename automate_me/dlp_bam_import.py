@@ -261,7 +261,7 @@ if __name__ == '__main__':
         args['storage_name'],
         args['storage_type'],
         args['bam_filenames'],
-        args['blob_container_name'])
+        blob_container_name)
 
     # Get the tag name if it was passed in
     try:
