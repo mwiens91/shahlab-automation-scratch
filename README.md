@@ -18,10 +18,11 @@ authorship.
 Make sure the shell you're running this container on has the following
 environment variables defined:
 
-+ TANTALUS_API_USERNAME
-+ TANTALUS_API_PASSWORD
++ COLOSSUS_API_URL
 + GSC_API_USERNAME
 + GSC_API_PASSWORD
++ TANTALUS_API_USERNAME
++ TANTALUS_API_PASSWORD
 
 Additionally, the [dlp_bam_import.py](automate_me/dlp_bam_import.py)
 script needs the following environment variables defined:
