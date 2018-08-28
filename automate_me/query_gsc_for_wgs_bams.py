@@ -443,7 +443,13 @@ if __name__ == '__main__':
         skip_file_import=args['skip_file_import'],
         skip_older_than=args['skip_older_than'])
 
+    # Get the tag name if it was passed in
+    try:
+        tag_name = args['tag_name']
+    except KeyError:
+        tag_name = None
+
     # Post data to Tantalus
     tantalus_api.sequence_dataset_add(
         model_dictionaries=json_to_post,
-        tag_name=args['tag_name'])
+        tag_name=tag_name)
