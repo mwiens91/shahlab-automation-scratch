@@ -246,6 +246,16 @@ if __name__ == '__main__':
     # variables defined)
     tantalus_api = TantalusApi()
 
+    # Don't care about blob_container_names if the storage type isn't
+    # blob
+    try:
+        blob_container_name = args['blob_container_name']
+    except KeyError as e:
+        if args['storage_type'] != 'blob':
+            blob_container_name = None
+        else:
+            raise e
+
     # Import DLP BAMs
     json_to_post = import_dlp_realign_bams(
         args['storage_name'],
