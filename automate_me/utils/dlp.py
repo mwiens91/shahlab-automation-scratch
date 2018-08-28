@@ -100,11 +100,11 @@ def create_sequence_dataset_models(file_info, storage_name):
                 file_type=info['file_type'],
                 compression=info['compression'],
                 filename=info['filename'],
-                index_sequence=info['index_sequence'],
+                #index_sequence=info['index_sequence'],
             )
 
-            if 'read_end' in info:
-                file_resource['read_end'] = info['read_end']
+            # if 'read_end' in info:
+            #     file_resource['read_end'] = info['read_end']
 
             sequence_dataset['file_resources'].append(file_resource)
 
