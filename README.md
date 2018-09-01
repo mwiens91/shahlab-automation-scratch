@@ -3,10 +3,11 @@
 
 # shahlab-automation-scratch
 
-The only purpose of this repository is to have [Singularity
+The main purpose of this repository is to have [Singularity
 Hub](https://www.singularity-hub.org/) robots detect a [Singularity
 container](https://www.sylabs.io/) build recipe in this repository and
-build it on Singularity Hub.
+build it on Singularity Hub. You can also run these tasks directly,
+should you wish.
 
 The code in here is ripped from
 [Tantalus](https://github.com/shahcompbio/tantalus) and is written by a
@@ -31,3 +32,75 @@ script needs the following environment variables defined:
 + AZURE_STORAGE_KEY
 
 The variable names should be self-explanatory.
+
+## Examples
+
+Each of the tasks take in their arguments in the form of a single JSON
+dump. Here's a few examples for how you might run them:
+
+### [query_gsc_for_wgs_bams.py](automate_me/query_gsc_for_wgs_bams.py)
+
+```
+python automate_me/query_gsc_for_wgs_bams.py '{"tag_name": "gsc_wgs_bam_test2", "library_ids": ["A06679"], "skip_file_import": false, "skip_older_than": "2018-06-01"}'
+```
+
+where the JSON dump is
+
+```json
+{
+  "tag_name": "gsc_wgs_bam_test",
+  "library_ids": ["A06679"],
+  "skip_file_import": false,
+  "skip_older_than": "2018-06-01"
+}
+```
+
+### [query_gsc_for_dlp_fastqs](automate_me/query_gsc_for_dlp_fastqs.py)
+
+```
+python automate_me/query_gsc_for_dlp_fastqs.py '{"dlp_library_id": "A96225C", "gsc_library_id": "PX0884"}'
+```
+
+where the JSON dump is
+
+```json
+{
+  "dlp_library_id": "A96225C",
+  "gsc_library_id": "PX0884"
+}
+```
+
+### [dlp_bcl_fastq_import](automate_me/dlp_bcl_fastq_import.py)
+
+```
+python automate_me/dlp_bcl_fastq_import.py '{"output_dir": "/shahlab/archive/single_cell_indexing/NextSeq/fastq/160705_NS500668_0105_AHGTTWBGXY", "flowcell_id": "AHGTTWBGXY", "storage_name": "shahlab", "storage_directory": "/shahlab/archive"}'
+```
+
+where the JSON dump is
+
+```json
+{
+  "output_dir": "/shahlab/archive/single_cell_indexing/NextSeq/fastq/160705_NS500668_0105_AHGTTWBGXY",
+  "flowcell_id": "AHGTTWBGXY",
+  "storage_name": "shahlab",
+  "storage_directory": "/shahlab/archive"
+}
+```
+
+### [dlp_bam_import](automate_me/dlp_bam_import.py)
+
+```
+python automate_me/dlp_bam_import.py '{"bam_filenames": ["/shahlab/archive/single_cell_indexing/bam/A96174B/grch37/bwa-aln/numlanes_2/SA532X5XB00478-A96174B-R55-C10.bam", "/shahlab/archive/single_cell_indexing/bam/A96174B/grch37/bwa-aln/numlanes_2/SA532X5XB00478-A96174B-R55-C12.bam"], "storage_name": "shahlab", "storage_type": "server"}'
+```
+
+where the JSON dump is
+
+```json
+{
+  "bam_filenames": ["/shahlab/archive/single_cell_indexing/bam/A96174B/grch37/bwa-aln/numlanes_2/SA532X5XB00478-A96174B-R55-C10.bam",
+                    "/shahlab/archive/single_cell_indexing/bam/A96174B/grch37/bwa-aln/numlanes_2/SA532X5XB00478-A96174B-R55-C12.bam"
+                   ],
+  "storage_name": "shahlab",
+  "storage_type": "server"
+}
+```
