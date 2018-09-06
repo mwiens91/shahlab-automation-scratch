@@ -4,7 +4,8 @@ import hashlib
 def get_lane_str(lane):
     if lane['lane_number'] == '':
         return '{}'.format(lane['flowcell_id'])
-    return '{}_{}'.format(lane['flowcell_id'], lane['lane_number'])
+    else:
+        return '{}_{}'.format(lane['flowcell_id'], lane['lane_number'])
 
 
 def get_lanes_str(lanes):

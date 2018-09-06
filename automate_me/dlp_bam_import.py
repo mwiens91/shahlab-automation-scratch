@@ -139,12 +139,12 @@ def get_created_time_blob(blob_service, container, blobname):
     return created_time
 
 
-def import_dlp_realign_bams(storage_name, storage_type, bam_filenames, blob_container_name):
+def import_dlp_realign_bams(storage_name, storage_type, bam_filenames, **kwargs):
     metadata = []
 
     if storage_type == 'blob':
         for bam_filename in bam_filenames:
-            metadata.extend(import_dlp_realign_bam_blob(bam_filename, blob_container_name))
+            metadata.extend(import_dlp_realign_bam_blob(bam_filename, kwargs['blob_container_name']))
     elif storage_type == 'server':
         for bam_filename in bam_filenames:
             metadata.extend(import_dlp_realign_bam_server(bam_filename))
@@ -261,7 +261,7 @@ if __name__ == '__main__':
         args['storage_name'],
         args['storage_type'],
         args['bam_filenames'],
-        blob_container_name)
+        blob_container_name=blob_container_name)
 
     # Get the tag name if it was passed in
     try:

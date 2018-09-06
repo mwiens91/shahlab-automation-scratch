@@ -117,6 +117,7 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
         file_type='BAM',
         compression='SPEC' if is_spec else 'UNCOMPRESSED',
         filename=bam_filename,
+        sequencefileinfo={},
     )
 
     bam_instance = dict(
@@ -136,6 +137,7 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
             file_type='BAI',
             compression='UNCOMPRESSED',
             filename=bai_filename,
+            sequencefileinfo={},
         )
 
         bai_instance = dict(
