@@ -8,7 +8,6 @@ import time
 import azure.storage.blob
 import pandas as pd
 import pysam
-from utils.colossus import get_colossus_sublibraries_from_library_id
 from utils.dlp import create_sequence_dataset_models
 from utils.tantalus import TantalusApi
 
@@ -33,21 +32,6 @@ def get_bam_aligner_name(bam_header):
                 return 'bwa_mem'
 
     raise Exception('no aligner name found')
-
-
-def query_colossus_dlp_index_info(library_id):
-    sublibraries = get_colossus_sublibraries_from_library_id(library_id)
-
-    cell_indices = {}
-    for sublib in sublibraries:
-        sample_id = sublib['sample_id']['sample_id']
-        row = 'R{:02}'.format(sublib['row'])
-        col = 'C{:02}'.format(sublib['column'])
-        cell_id = '-'.join([sample_id, library_id, row, col])
-        index_sequence = sublib['primer_i7'] + '-' + sublib['primer_i5']
-        cell_indices[cell_id] = index_sequence
-
-    return cell_indices
 
 
 def get_bam_header_file(filename):
@@ -83,7 +67,7 @@ def get_bam_header_info(header):
         sample_id, library_id, row, col = cell_id.split('-')
 
         if library_id not in index_info:
-            index_info[library_id] = query_colossus_dlp_index_info(library_id)
+            index_info[library_id] = read_group['KS']
 
         index_sequence = index_info[library_id][cell_id]
 
