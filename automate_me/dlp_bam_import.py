@@ -66,10 +66,7 @@ def get_bam_header_info(header):
         flowcell_lane = read_group['PU']
         sample_id, library_id, row, col = cell_id.split('-')
 
-        if library_id not in index_info:
-            index_info[library_id] = read_group['KS']
-
-        index_sequence = index_info[library_id][cell_id]
+        index_sequence = read_group['KS']
 
         flowcell_id = flowcell_lane.split('_')[0]
         lane_number = ''
