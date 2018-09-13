@@ -12,6 +12,7 @@ from utils.colossus import (
 from utils.dlp import create_sequence_dataset_models, fastq_paired_end_check
 from utils.gsc import get_sequencing_instrument, GSCAPI
 from utils.tantalus import TantalusApi
+from utils.filecopy import rsync_file
 
 
 solexa_run_type_map = {
@@ -93,13 +94,34 @@ filename_pattern_map = {
 }
 
 
-def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
-    #storage = dict(name='gsc')
+dlp_fastq_template = os.path.join(
+    'single_cell_indexing',
+    'fastq',
+    '{primary_sample_id}',
+    '{dlp_library_id}',
+    '{flowcell_id}_{lane_number}',
+    '{cell_sample_id}_{dlp_library_id}_{index_sequence}_{read_end}.fastq')
 
+
+def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
+    primary_sample_id = query_libraries_by_library_id(dlp_library_id)['sample']['sample_id']
     cell_samples = query_colossus_dlp_cell_info(dlp_library_id)
     rev_comp_overrides = query_colossus_dlp_rev_comp_override(dlp_library_id)
 
+    external_identifier = '{}_{}'.format(primary_sample_id, dlp_library_id)
+
     gsc_api = GSCAPI()
+
+    library_infos = gsc_api.query('library?external_identifier={}'.format(external_identifier))
+
+    if len(library_infos) == 0:
+        raise Exception('no libraries with external_identifier {} in gsc api'.format(external_identifier))
+    elif len(library_infos) > 1:
+        raise Exception('multiple libraries with external_identifier {} in gsc api'.format(external_identifier))
+
+    library_info = library_infos[0]
+
+    gsc_library_id = library_info['name']
 
     fastq_infos = gsc_api.query('fastq?parent_library={}'.format(gsc_library_id))
 
@@ -142,19 +164,28 @@ def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
         if not passed:
             continue
 
-        # ASSUMPTION: GSC stored files are pathed from root
-        fastq_filename_override = fastq_path
-
-        # ASSUMPTION: meaningful path starts at library_name
-        fastq_filename = fastq_path[fastq_path.find(gsc_library_id):]
-        # Prepend single_cell_indexing/<gsc_lib_id>/ so it follows our file structure
-        fastq_filename = 'single_cell_indexing/HiSeq/' + fastq_filename
-
         try:
             cell_sample_id = cell_samples[index_sequence]
         except KeyError:
             raise Exception('unable to find index {} for flowcell lane {} for library {}'.format(
                 index_sequence, flowcell_lane, dlp_library_id))
+
+        tantalus_filename = dlp_fastq_template.format(
+            primary_sample_id=primary_sample_id,
+            dlp_library_id=dlp_library_id,
+            flowcell_id=flowcell_id,
+            lane_number=lane_number,
+            cell_sample_id=cell_sample_id,
+            index_sequence=index_sequence,
+            read_end=read_end,
+        )
+
+        tantalus_path = os.path.join(
+            storage['storage_directory'],
+            tantalus_filename,
+        )
+
+        rsync_file(fastq_path, tantalus_path)
 
         fastq_file_info.append(dict(
             dataset_type='FQ',
@@ -167,6 +198,7 @@ def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
                 lane_number=lane_number,
                 sequencing_centre='GSC',
                 sequencing_instrument=sequencing_instrument,
+                sequencing_library_id=gsc_library_id,
                 read_type=read_type,
             )],
             size=os.path.getsize(fastq_path),
@@ -175,15 +207,12 @@ def query_gsc_dlp_paired_fastqs(dlp_library_id, gsc_library_id):
             read_end=read_end,
             index_sequence=index_sequence,
             compression='GZIP',
-            filename=fastq_filename,
-            filename_override=fastq_filename_override,
+            filename=tantalus_filename,
         ))
-
-    storage_name = 'gsc'
 
     fastq_paired_end_check(fastq_file_info)
 
-    json_list = create_sequence_dataset_models(fastq_file_info, storage_name)
+    json_list = create_sequence_dataset_models(fastq_file_info, storage['name'])
 
     return json_list
 
@@ -196,10 +225,12 @@ if __name__ == '__main__':
     # variables defined)
     tantalus_api = TantalusApi()
 
+    storage = tantalus_api.get('storage_server', name=args['storage_name'])
+
     # Query GSC for FastQs
-    json_to_post = query_gsc_dlp_paired_fastqs(
+    json_to_post = import_gsc_dlp_paired_fastqs(
         args['dlp_library_id'],
-        args['gsc_library_id'],)
+        storage)
 
     # Get the tag name if it was passed in
     try:
@@ -211,3 +242,4 @@ if __name__ == '__main__':
     tantalus_api.sequence_dataset_add(
         model_dictionaries=json_to_post,
         tag_name=tag_name)
+

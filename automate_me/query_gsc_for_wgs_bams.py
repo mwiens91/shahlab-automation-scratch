@@ -10,6 +10,7 @@ import pandas as pd
 from utils.gsc import get_sequencing_instrument, GSCAPI
 from utils.tantalus import TantalusApi
 from utils.utils import get_lanes_str
+from utils.filecopy import rsync_file
 
 
 def convert_time(a):
@@ -74,6 +75,7 @@ def get_lane_bam_path(library_type, data_path, flowcell_id, lane_number, adapter
         bam_path = add_compression_suffix(bam_path, compression)
     return bam_path
 
+
 protocol_id_map = {
     12: 'WGS',
     73: 'WGS',
@@ -86,9 +88,32 @@ protocol_id_map = {
     137: 'RNASEQ',
 }
 
+
 solexa_run_type_map = {
     'Paired': 'P',
 }
+
+
+tantalus_bam_filename_template = os.path.join(
+    '{sample_id}',
+    'bam',
+    '{library_type}',
+    '{library_id}',
+    'lanes_{lanes_str}',
+    '{sample_id}_{library_id}_{lanes_str}.bam')
+
+
+def get_tantalus_bam_filename(sample, library, lane_infos):
+    lanes_str = get_lanes_str(lane_infos)
+
+    bam_path = tantalus_bam_filename_template.format(
+        sample_id=sample['sample_id'],
+        library_type=library['library_type'],
+        library_id=library['library_id'],
+        lanes_str=lanes_str,
+    )
+
+    return bam_path
 
 
 def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_spec=False):
@@ -96,19 +121,16 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
 
     bai_path = bam_path + '.bai'
 
+    tantalus_bam_filename = get_tantalus_bam_filename(sample, library, lane_infos)
+    tantalus_bai_filename = tantalus_bam_filename + '.bai'
+
+    tantalus_bam_path = os.path.join(storage['storage_directory'], tantalus_bam_filename)
+    tantalus_bai_path = os.path.join(storage['storage_directory'], tantalus_bai_filename)
+
     json_list = []
 
-    # ASSUMPTION: GSC stored files are pathed from root
-    bam_filename_override = bam_path
-    bai_filename_override = bai_path
-
-    # ASSUMPTION: meaningful path starts at library_name
-    bam_filename = bam_path[bam_path.find(library_name):]
-    bai_filename = bai_path[bai_path.find(library_name):]
-
-    # Prepend sample id to filenames
-    bam_filename = os.path.join(sample['sample_id'], bam_filename)
-    bai_filename = os.path.join(sample['sample_id'], bai_filename)
+    rsync_file(bam_path, tantalus_bam_path)
+    rsync_file(bai_path, tantalus_bai_path)
 
     # Save BAM file info xor save BAM SpEC file info
     bam_file = dict(
@@ -116,14 +138,13 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
         created=pd.Timestamp(time.ctime(os.path.getmtime(bam_path)), tz='Canada/Pacific'),
         file_type='BAM',
         compression='SPEC' if is_spec else 'UNCOMPRESSED',
-        filename=bam_filename,
+        filename=tantalus_bam_filename,
         sequencefileinfo={},
     )
 
     bam_instance = dict(
-        storage=storage,
+        storage={'name': storage['name']},
         file_resource=bam_file,
-        filename_override=bam_filename_override,
         model='FileInstance',
     )
     json_list.append(bam_instance)
@@ -136,14 +157,13 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
             created=pd.Timestamp(time.ctime(os.path.getmtime(bai_path)), tz='Canada/Pacific'),
             file_type='BAI',
             compression='UNCOMPRESSED',
-            filename=bai_filename,
+            filename=tantalus_bai_filename,
             sequencefileinfo={},
         )
 
         bai_instance = dict(
-            storage=storage,
+            storage={'name': storage['name']},
             file_resource=bai_file,
-            filename_override=bai_filename_override,
             model='FileInstance',
         )
         json_list.append(bai_instance)
@@ -151,7 +171,7 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
     else:
         bai_file = None
 
-    dataset_name = 'BAM-{}-{}-{} ({})'.format(
+    dataset_name = 'BAM-{}-{}-{} (lanes {})'.format(
         sample['sample_id'],
         library['library_type'],
         library['library_id'],
@@ -217,20 +237,14 @@ def add_gsc_bam_lanes(sample, library, lane_infos):
     return json_list
 
 
-def query_gsc_library( libraries, skip_file_import=False, skip_older_than=None):
+def import_gsc_library(libraries, storage, skip_file_import=False, skip_older_than=None):
     """
-    Take a list of library names as input.
+    Copy GSC libraries to a storage and return metadata json.
     """
 
     json_list = []
 
     gsc_api = GSCAPI()
-
-    # ASSUMPTION: GSC stored files are pathed from root
-    storage = dict(
-        name='gsc',
-    )
-    # TODO: check that all GSC file instances have filename overrides
 
     for library_name in libraries:
         library_infos = gsc_api.query('library?name={}'.format(library_name))
@@ -433,17 +447,21 @@ if __name__ == '__main__':
     args = json.loads(sys.argv[1])
 
     # Convert the date to the format we want
-    args['skip_older_than'] = valid_date(args['skip_older_than'])
+    if 'skip_older_than' in args:
+        args['skip_older_than'] = valid_date(args['skip_older_than'])
 
     # Connect to the Tantalus API (this requires appropriate environment
     # variables defined)
     tantalus_api = TantalusApi()
 
+    storage = tantalus_api.get('storage_server', name=args['storage_name'])
+
     # Query the GSC many times
-    json_to_post = query_gsc_library(
-        args['library_ids'],
-        skip_file_import=args['skip_file_import'],
-        skip_older_than=args['skip_older_than'])
+    json_to_post = import_gsc_library(
+        args['libraries'],
+        storage,
+        skip_file_import=args.get('skip_file_import'),
+        skip_older_than=args.get('skip_older_than'))
 
     # Get the tag name if it was passed in
     try:

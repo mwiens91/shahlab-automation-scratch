@@ -45,7 +45,7 @@ def create_sequence_dataset_models(file_info, storage_name):
     # Sort files by dataset
     dataset_info = collections.defaultdict(list)
     for info in file_info:
-        dataset_name = '{}-{}-{}-{} ({})'.format(
+        dataset_name = '{}-{}-{}-{} (lanes {})'.format(
             info['dataset_type'],
             info['sample_id'],
             info['library_type'],
