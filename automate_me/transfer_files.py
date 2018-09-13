@@ -307,12 +307,12 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
     """ Transfer a set of files
     """
 
-    to_storage = tantalus.get_storage(to_storage_name)
-    from_storage = tantalus.get_storage(from_storage_name)
+    to_storage = tantalus_api.get('storage', name=to_storage_name)
+    from_storage = tantalus_api.get('storage', name=from_storage_name)
 
     f_transfer = get_file_transfer_function(from_storage, to_storage)
 
-    for dataset in tantalus.get_sequence_datasets(library_id, sample_id):
+    for dataset in tantalus_api.list('sequence_dataset', tags__name=tag_name):
         for file_resource in dataset['file_resources']:
             storage_names = []
             for file_instance in file_resource['file_instances']:
@@ -329,4 +329,8 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
 
             f_transfer(file_instance, to_storage)
 
-            tantalus.create_file_instance(file_resource['id'], to_storage['id'])
+            tantalus_api.get_or_create(
+                'file_instance',
+                file_resource=file_resource['id'],
+                storage=to_storage['id'],
+            )
