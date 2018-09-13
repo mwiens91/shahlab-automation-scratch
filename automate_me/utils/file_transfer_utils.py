@@ -1,15 +1,16 @@
-from azure.storage.blob import BlockBlobService, ContainerPermissions
+from __future__ import print_function
 import datetime
-import paramiko
-import time
+import errno
+import logging
+import os
 import subprocess
 import sys
-import os
-import logging
+import time
+import traceback
+from azure.storage.blob import BlockBlobService, ContainerPermissions
 
 from tantalus.models import *
 from tantalus.exceptions.file_transfer_exceptions import *
-import errno
 
 logger = logging.getLogger('azure.storage')
 handler = logging.StreamHandler()
@@ -18,7 +19,8 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
-# if available memory on the storage is less than this, include this as a possible source of error if the transfer fails
+# if available memory on the storage is less than this, include this as
+# a possible source of error if the transfer fails
 __MINIMUM_FREE_DISK_SPACE = 50e10
 
 
@@ -35,8 +37,8 @@ def get_file_md5(filepath):
 
 
 def get_blob_md5(block_blob_service, container, blobname):
-    # Try 3 times to deal with null md5 on new blobs 
-    for i in range(3):
+    # Try 3 times to deal with null md5 on new blobs
+    for _ in range(3):
         base_64_md5 = block_blob_service.get_blob_properties(
             container,
             blobname).properties.content_settings.content_md5
@@ -63,7 +65,7 @@ def make_dirs(dirname):
             raise
 
 
-def check_or_update_md5(md5_check, temp_directory):
+def check_or_update_md5(md5_check):
     """ Check or update an md5 for a file instance in an md5 check object.
     """
 
@@ -78,8 +80,9 @@ def check_or_update_md5(md5_check, temp_directory):
 
     else:
         if existing_md5 != md5:
-            raise MD5CheckError('Calculated md5 {} different from recorded md5 {} for file {}'.format(
-                md5, existing_md5, filepath))
+            raise MD5CheckError(
+                'Calculated md5 {} different from recorded md5 {} for file {}'.format(
+                    md5, existing_md5, filepath))
 
 
 def _as_gb(num_bytes):
@@ -100,11 +103,11 @@ class TransferProgress(object):
         percent = 'NA'
         if total > 0:
             percent = '{:.2f}'.format(100. * float(current) / total)
-        print '{}/{} ({}%) in {}s'.format(
+        print('{}/{} ({}%) in {}s'.format(
             _as_gb(current),
             _as_gb(total),
             percent,
-            elapsed)
+            elapsed))
 
 
 class AzureTransfer(object):
@@ -120,7 +123,7 @@ class AzureTransfer(object):
 
     def download_from_blob(self, file_instance, to_storage):
         """ Transfer a file from blob to a server.
-        
+
         This should be called on the from server.
         """
 
@@ -132,10 +135,11 @@ class AzureTransfer(object):
         make_dirs(os.path.dirname(local_filepath))
 
         if not self.block_blob_service.exists(cloud_container, cloud_blobname):
-            error_message = "source file {filepath} does not exist on {storage} for file instance with pk: {pk}".format(
-                filepath=cloud_filepath,
-                storage=file_instance.storage.name,
-                pk=file_instance.id)
+            error_message = (
+                "source file {filepath} does not exist on {storage} for file instance with pk: {pk}".format(
+                    filepath=cloud_filepath,
+                    storage=file_instance.storage.name,
+                    pk=file_instance.id))
             raise FileDoesNotExist(error_message)
 
         if os.path.isfile(local_filepath):
@@ -149,9 +153,9 @@ class AzureTransfer(object):
             cloud_blobname,
             local_filepath,
             progress_callback=TransferProgress().print_progress,
-            max_connections=1)
+            max_connections=16)
 
-        os.chmod(local_filepath, 0444)
+        os.chmod(local_filepath, 0o444)
 
     def _check_file_same_blob(self, file_resource, container, blobname):
         properties = self.block_blob_service.get_blob_properties(container, blobname)
@@ -162,7 +166,7 @@ class AzureTransfer(object):
 
     def upload_to_blob(self, file_instance, to_storage):
         """ Transfer a file from a server to blob.
-        
+
         This should be called on the from server.
         """
 
@@ -172,14 +176,17 @@ class AzureTransfer(object):
         assert cloud_container == to_storage.get_storage_container()
 
         if not os.path.isfile(local_filepath):
-            error_message = "source file {filepath} does not exist on {storage} for file instance with pk: {pk}".format(
-                filepath=local_filepath,
-                storage=file_instance.storage.name,
-                pk=file_instance.id)
+            error_message = (
+                "source file {filepath} does not exist on {storage} for file instance with pk: {pk}".format(
+                    filepath=local_filepath,
+                    storage=file_instance.storage.name,
+                    pk=file_instance.id))
             raise FileDoesNotExist(error_message)
 
         if self.block_blob_service.exists(cloud_container, cloud_blobname):
-            if self._check_file_same_blob(file_instance.file_resource, cloud_container, cloud_blobname):
+            if self._check_file_same_blob(file_instance.file_resource,
+                                          cloud_container,
+                                          cloud_blobname):
                 return
 
             error_message = "target file {filepath} already exists on {storage}".format(
@@ -192,7 +199,7 @@ class AzureTransfer(object):
             cloud_blobname,
             local_filepath,
             progress_callback=TransferProgress().print_progress,
-            max_connections=1,
+            max_connections=16,
             timeout=10*60*64)
 
 
@@ -216,7 +223,7 @@ def blob_to_blob_transfer_closure(source_account, destination_account):
     # can read its private files
     shared_access_sig = (
         source_account.generate_container_shared_access_signature(
-            container_name = source_account.get_storage_container(),
+            container_name=source_account.get_storage_container(),
             permission=ContainerPermissions.READ,
             expiry=(datetime.datetime.utcnow()
                     + datetime.timedelta(hours=200)),))
@@ -284,7 +291,7 @@ def check_file_same_local(file_resource, filepath):
 
     if file_resource.size != os.path.getsize(filepath):
         return False
-    
+
     return True
 
 
@@ -356,7 +363,7 @@ def get_file_transfer_function(from_storage, to_storage):
         return rsync_file
 
 
-def transfer_files(file_transfer, temp_directory):
+def transfer_files(file_transfer):
     """ Transfer a set of files
     """
 
@@ -368,8 +375,8 @@ def transfer_files(file_transfer, temp_directory):
     # Lock transfer to specific storage by creating
     # reserved file instances
     file_instances = []
-    for dataset in AbstractDataSet.objects.filter(tags__name=tag_name):
-        file_resources = dataset.get_file_resources()
+    for dataset in SequenceDataset.objects.filter(tags__name=tag_name):
+        file_resources = dataset.file_resources.all()
 
         for file_resource in file_resources:
             # Check for an existing file instance at destination
@@ -381,7 +388,7 @@ def transfer_files(file_transfer, temp_directory):
             # Check that the file exists on the from server
             # fail if no file exists
             source_file_instance = file_resource.fileinstance_set.filter(storage=from_storage)
-            if len(source_file_instance) == 0:
+            if not source_file_instance:
                 raise FileDoesNotExist(
                     'file instance for file resource {} not deployed on source storage {}'.format(
                         file_resource.filename, from_storage.name))
@@ -412,7 +419,19 @@ def transfer_files(file_transfer, temp_directory):
     # Transfer all files that have reserved file instances
     # Create each file on success
     for file_instance in file_instances:
-        print 'starting transfer of {} to {}'.format(file_instance.file_resource.filename, to_storage.name)
-        f_transfer(file_instance, to_storage)
+        print('starting transfer of {} to {}'.format(file_instance.file_resource.filename, to_storage.name))
+        success = False
+        for _ in range(3):
+            try:
+                f_transfer(file_instance, to_storage)
+                success = True
+                break
+            except:
+                print('transfer failed')
+                traceback.print_exc()
+        if not success:
+            raise Exception('failed all retry attempts')
         FileInstance.objects.create(file_resource=file_instance.file_resource, storage=to_storage)
-        print 'finished transfer of {} to {}'.format(file_instance.file_resource.filename, to_storage.name)
+        print('finished transfer of {} to {}'.format(
+            file_instance.file_resource.filename,
+            to_storage.name))
