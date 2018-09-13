@@ -38,6 +38,17 @@ class TantalusApi(object):
             'TANTALUS_API_URL',
             TANTALUS_API_URL)
 
+        self.tantalus_document_url = self.base_api_url + 'swagger/?format=openapi'
+
+        auth = coreapi.auth.BasicAuthentication(
+            username=os.environ.get('TANTALUS_API_USERNAME'),
+            password=os.environ.get('TANTALUS_API_PASSWORD'),
+        )
+        decoders = [OpenAPICodec(), JSONCodec()]
+
+        self.coreapi_client = coreapi.Client(auth=auth, decoders=decoders)
+        self.coreapi_schema = self.coreapi_client.get(self.tantalus_document_url, format = 'openapi')
+
     @staticmethod
     def join_urls(*pieces):
         """Join pieces of an URL together safely."""
@@ -73,3 +84,105 @@ class TantalusApi(object):
             print("An HTTP request to %s failed with status %s." %
                   (endpoint_url, r.status_code),
                   file=sys.stderr,)
+
+
+    def get(table_name, **fields):
+        ''' Check if a resource exists in Tantalus and return it. '''
+
+        get_params = {}
+
+        for field in self.coreapi_schema[table_name]['list'].fields:
+            if field.name in ('limit', 'offset'):
+                continue
+            if field.name in fields:
+                get_params[field.name] = fields[field.name]
+
+        list_results = self.coreapi_client.action(self.coreapi_schema, [table_name, 'list'], params=get_params)
+
+        if list_results['count'] > 1:
+            raise ValueError('more than 1 object for {}, {}'.format(
+                table_name, fields))
+
+        if list_results['count'] == 0:
+            raise ValueError('no object for {}, {}'.format(
+                table_name, fields))
+
+        else:
+            result = list_results['results'][0]
+
+            for field_name, field_value in fields.iteritems():
+                if field_name not in result:
+                    raise ValueError('field {} not in {}'.format(
+                        field_name, name))
+
+                if result[field_name] != field_value:
+                    raise ValueError('field {} mismatches, set to {} not {}'.format(
+                        field_name, result[field_name], field_value))
+
+            return result
+
+    # TODO: do these handle pagination
+    # TODO: refactor so that for instance get uses list
+
+    def list(table_name, **fields):
+        ''' List resources in tantalus. '''
+
+        get_params = {}
+
+        for field in self.coreapi_schema[table_name]['list'].fields:
+            if field.name in ('limit', 'offset'):
+                continue
+            if field.name in fields:
+                get_params[field.name] = fields[field.name]
+
+        list_results = self.coreapi_client.action(self.coreapi_schema, [table_name, 'list'], params=get_params)
+
+        for result in list_results:
+            for field_name, field_value in fields.iteritems():
+                if field_name not in result:
+                    raise ValueError('field {} not in {}'.format(
+                        field_name, name))
+
+                if result[field_name] != field_value:
+                    raise ValueError('field {} mismatches, set to {} not {}'.format(
+                        field_name, result[field_name], field_value))
+
+        return list_result
+
+
+    def get_or_create(table_name, **fields):
+        ''' Check if a resource exists in Tantalus and return it. 
+        If it does not exist, create the resource and return it. '''
+
+        get_params = {}
+
+        for field in self.coreapi_schema[table_name]['list'].fields:
+            if field.name in ('limit', 'offset'):
+                continue
+            if field.name in fields:
+                get_params[field.name] = fields[field.name]
+
+        list_results = self.coreapi_client.action(self.coreapi_schema, [table_name, 'list'], params=get_params)
+
+        if list_results['count'] > 1:
+            raise ValueError('more than 1 object for {}, {}'.format(
+                table_name, fields))
+
+        elif list_results['count'] == 1:
+            result = list_results['results'][0]
+
+            for field_name, field_value in fields.iteritems():
+                if field_name not in result:
+                    raise ValueError('field {} not in {}'.format(
+                        field_name, name))
+
+                if result[field_name] != field_value:
+                    raise ValueError('field {} already set to {} not {}'.format(
+                        field_name, result[field_name], field_value))
+
+        else:
+            result = self.coreapi_client.action(self.coreapi_schema, [table_name, 'create'], params=fields)
+
+        return result
+
+
