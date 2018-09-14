@@ -347,12 +347,17 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
                 print 'skipping file resource {} that already exists on storage {}'.format(
                     file_resource['filename'], to_storage_name)
 
-            if from_storage_name not in storage_names:
+            from_file_instance = None
+            for file_instance in file_resource['file_instances']:
+                if file_instance['storage']['name'] == from_storage_name:
+                    from_file_instance = file_instance
+
+            if from_file_instance is None:
                 raise FileDoesNotExist(
                     'file instance for file resource {} does not exist on source storage {}'.format(
                         file_resource['filename'], from_storage_name))
 
-            f_transfer(file_instance, to_storage)
+            f_transfer(from_file_instance, to_storage)
 
             tantalus_api.get_or_create(
                 'file_instance',
