@@ -116,7 +116,7 @@ class TantalusApi(object):
             for field_name, field_value in fields.iteritems():
                 if field_name not in result:
                     raise ValueError('field {} not in {}'.format(
-                        field_name, name))
+                        field_name, table_name))
 
                 if result[field_name] != field_value:
                     raise ValueError('field {} mismatches, set to {} not {}'.format(
