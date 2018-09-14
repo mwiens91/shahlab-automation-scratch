@@ -11,6 +11,9 @@ import os
 import sys
 from django.core.serializers.json import DjangoJSONEncoder
 import requests
+import coreapi
+from openapi_codec import OpenAPICodec
+from coreapi.codecs import JSONCodec
 
 
 TANTALUS_API_URL = 'http://tantalus.bcgsc.ca/api/'
@@ -47,7 +50,7 @@ class TantalusApi(object):
         decoders = [OpenAPICodec(), JSONCodec()]
 
         self.coreapi_client = coreapi.Client(auth=auth, decoders=decoders)
-        self.coreapi_schema = self.coreapi_client.get(self.tantalus_document_url, format = 'openapi')
+        self.coreapi_schema = self.coreapi_client.get(self.tantalus_document_url, format='openapi')
 
     @staticmethod
     def join_urls(*pieces):
@@ -86,7 +89,7 @@ class TantalusApi(object):
                   file=sys.stderr,)
 
 
-    def get(table_name, **fields):
+    def get(self, table_name, **fields):
         ''' Check if a resource exists in Tantalus and return it. '''
 
         get_params = {}
@@ -124,7 +127,7 @@ class TantalusApi(object):
     # TODO: do these handle pagination
     # TODO: refactor so that for instance get uses list
 
-    def list(table_name, **fields):
+    def list(self, table_name, **fields):
         ''' List resources in tantalus. '''
 
         get_params = {}
@@ -150,7 +153,7 @@ class TantalusApi(object):
         return list_result
 
 
-    def get_or_create(table_name, **fields):
+    def get_or_create(self, table_name, **fields):
         ''' Check if a resource exists in Tantalus and return it. 
         If it does not exist, create the resource and return it. '''
 
