@@ -13,7 +13,6 @@ from utils.utils import make_dirs
 
 # TODO(mwiens91): Give me equivalent functionality!!!!
 # from tantalus.models import *
-# from tantalus.exceptions.file_transfer_exceptions import *
 
 logger = logging.getLogger('azure.storage')
 handler = logging.StreamHandler()
@@ -21,6 +20,33 @@ formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
+
+
+class DataCorruptionError(Exception):
+    """An error when corrupt data is found.
+
+    Raised when MD5 calculated does not match the saved database md5 for
+    the file resource.
+    """
+    pass
+
+
+class FileDoesNotExist(Exception):
+    """An error for when a file can't be found.
+
+    Raised when the file does not actually exist, although there is a
+    FileInstance object in the database that says the file exists.
+    """
+    pass
+
+
+class FileAlreadyExists(Exception):
+    """An error for when a file already exists.
+
+    Raised when the file already exists, although there is no
+    FileInstance object in the database that says the file exists.
+    """
+    pass
 
 
 def _as_gb(num_bytes):
