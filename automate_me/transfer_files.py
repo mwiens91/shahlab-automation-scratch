@@ -1,16 +1,19 @@
-from azure.storage.blob import BlockBlobService, ContainerPermissions
+#!/usr/bin/env python
+
 import datetime
-import paramiko
-import time
+import json
+import logging
+import os
 import subprocess
 import sys
-import os
-import logging
-import errno
-
-from tantalus.models import *
-from tantalus.exceptions.file_transfer_exceptions import *
+import time
+from azure.storage.blob import BlockBlobService, ContainerPermissions
+from utils.tantalus import TantalusApi
 from utils.utils import make_dirs
+
+# TODO(mwiens91): Give me equivalent functionality!!!!
+# from tantalus.models import *
+# from tantalus.exceptions.file_transfer_exceptions import *
 
 logger = logging.getLogger('azure.storage')
 handler = logging.StreamHandler()
@@ -159,7 +162,7 @@ def blob_to_blob_transfer_closure(source_storage, destination_storage):
     # can read its private files
     shared_access_sig = (
         source_account.generate_container_shared_access_signature(
-            container_name = source_storage['storage_container'],
+            container_name=source_storage['storage_container'],
             permission=ContainerPermissions.READ,
             expiry=(datetime.datetime.utcnow()
                     + datetime.timedelta(hours=200)),))
@@ -299,6 +302,9 @@ def get_file_transfer_function(from_storage, to_storage):
 def transfer_files(tag_name, from_storage_name, to_storage_name):
     """ Transfer a set of files
     """
+    # Connect to the Tantalus API (this requires appropriate environment
+    # variables defined)
+    tantalus_api = TantalusApi()
 
     to_storage = tantalus_api.get('storage', name=to_storage_name)
     from_storage = tantalus_api.get('storage', name=from_storage_name)
@@ -327,3 +333,14 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
                 file_resource=file_resource['id'],
                 storage=to_storage['id'],
             )
+
+
+if __name__ == '__main__':
+    # Parse the incoming arguments
+    args = json.loads(sys.argv[1])
+
+    # Transfer some files
+    transfer_files(
+        tag_name=args['tag_name'],
+        from_storage_name=args['from_storage'],
+        to_storage_name=args['to_storage'],)
