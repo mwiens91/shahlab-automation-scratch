@@ -231,7 +231,7 @@ def blob_to_blob_transfer_closure(source_storage, destination_storage):
                 # name already exists!
                 error_message = "target filepath {filepath} already exists on {storage} but with different filesize".format(
                     filepath=source_filepath,
-                    storage=to_storage['name'])
+                    storage=destination_storage['storage_account'])
                 raise FileAlreadyExists(error_message)
 
         # Finally, transfer the file between the blobs
