@@ -2,16 +2,11 @@ import os
 import sys
 import subprocess
 
-
-def mkdir_with_mode(directory, mode):
-    if not os.path.isdir(directory):
-        oldmask = os.umask(000)
-        os.makedirs(directory, mode)
-        os.umask(oldmask)
+from utils import make_dirs
 
 
 def rsync_file(from_path, to_path):
-    mkdir_with_mode(os.path.dirname(to_path), 0775)
+    make_dirs(os.path.dirname(to_path))
 
     subprocess_cmd = [
         'rsync',

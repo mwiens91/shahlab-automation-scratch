@@ -1,4 +1,5 @@
 import hashlib
+import errno
 
 
 def get_lane_str(lane):
@@ -19,4 +20,15 @@ def get_lanes_str(lanes):
         lanes = ', '.join(sorted([get_lane_str(a) for a in lanes]))
         lanes = hashlib.md5(lanes)
         return '{}'.format(lanes.hexdigest()[:8])
+
+
+def make_dirs(dirname, mode=0775):
+    oldmask = os.umask(000)
+    try:
+        os.makedirs(dirname, mode)
+    except OSError as e:
+        if e.errno != errno.EEXIST or not os.path.isdir(dirname):
+            raise
+    finally:
+        os.umask(oldmask)
 

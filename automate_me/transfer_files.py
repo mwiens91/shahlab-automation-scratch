@@ -6,10 +6,11 @@ import subprocess
 import sys
 import os
 import logging
+import errno
 
 from tantalus.models import *
 from tantalus.exceptions.file_transfer_exceptions import *
-import errno
+from utils.utils import make_dirs
 
 logger = logging.getLogger('azure.storage')
 handler = logging.StreamHandler()
@@ -17,14 +18,6 @@ formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
-
-
-def make_dirs(dirname):
-    try:
-        os.makedirs(dirname)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
 
 
 def _as_gb(num_bytes):
