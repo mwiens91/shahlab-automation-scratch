@@ -30,8 +30,8 @@ class TantalusApi(object):
         # Create session and give it with auth
         self.session = requests.Session()
         self.session.auth = (
-            os.environ.get('TANTALUS_API_USERNAME'),
-            os.environ.get('TANTALUS_API_PASSWORD'),)
+            os.environ['TANTALUS_API_USERNAME'],
+            os.environ['TANTALUS_API_PASSWORD'],)
 
         # Tell Tantalus we're sending JSON
         self.session.headers.update({'content-type': 'application/json'})
@@ -44,8 +44,8 @@ class TantalusApi(object):
         self.tantalus_document_url = self.base_api_url + 'swagger/?format=openapi'
 
         auth = coreapi.auth.BasicAuthentication(
-            username=os.environ.get('TANTALUS_API_USERNAME'),
-            password=os.environ.get('TANTALUS_API_PASSWORD'),
+            username=os.environ['TANTALUS_API_USERNAME'],
+            password=os.environ['TANTALUS_API_PASSWORD'],
         )
         decoders = [OpenAPICodec(), JSONCodec()]
 
