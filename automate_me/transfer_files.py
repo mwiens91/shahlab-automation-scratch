@@ -11,9 +11,6 @@ from azure.storage.blob import BlockBlobService, ContainerPermissions
 from utils.tantalus import TantalusApi
 from utils.utils import make_dirs
 
-# TODO(mwiens91): Give me equivalent functionality!!!!
-# from tantalus.models import *
-
 logger = logging.getLogger('azure.storage')
 handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
