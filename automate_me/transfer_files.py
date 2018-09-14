@@ -202,7 +202,7 @@ def blob_to_blob_transfer_closure(source_storage, destination_storage):
         """
         # Copypasta validation from AzureTransfer.download_from_blob
         source_filepath = source_file['filepath']
-        source_container, blobname = cloud_filepath.split('/', 1)
+        source_container, blobname = source_filepath.split('/', 1)
         assert source_container == source_file['storage']['storage_container']
 
         if not source_account.exists(source_container, blobname):
@@ -230,7 +230,7 @@ def blob_to_blob_transfer_closure(source_storage, destination_storage):
                 # Raise an exception and report that a blob with this
                 # name already exists!
                 error_message = "target filepath {filepath} already exists on {storage} but with different filesize".format(
-                    filepath=cloud_filepath,
+                    filepath=source_filepath,
                     storage=to_storage['name'])
                 raise FileAlreadyExists(error_message)
 
