@@ -140,17 +140,20 @@ class TantalusApi(object):
 
         list_results = self.coreapi_client.action(self.coreapi_schema, [table_name, 'list'], params=get_params)
 
-        for result in list_results:
-            for field_name, field_value in fields.iteritems():
-                if field_name not in result:
-                    raise ValueError('field {} not in {}'.format(
-                        field_name, table_name))
+        # Validation
+        # TODO: be more careful with this; handle double underscore '__'
+        # in filter names if using this in future
+        # for result in list_results['results']:
+        #     for field_name, field_value in fields.iteritems():
+        #         if field_name not in result:
+        #             raise ValueError('field {} not in {}'.format(
+        #                 field_name, table_name))
 
-                if result[field_name] != field_value:
-                    raise ValueError('field {} mismatches, set to {} not {}'.format(
-                        field_name, result[field_name], field_value))
+        #         if result[field_name] != field_value:
+        #             raise ValueError('field {} mismatches, set to {} not {}'.format(
+        #                 field_name, result[field_name], field_value))
 
-        return list_result
+        return list_results['results']
 
 
     def get_or_create(self, table_name, **fields):
