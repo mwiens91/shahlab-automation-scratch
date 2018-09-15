@@ -88,7 +88,7 @@ class AzureTransfer(object):
             account_key=storage['credentials']['storage_key'])
         self.block_blob_service.MAX_BLOCK_SIZE = 64 * 1024 * 1024
 
-    def download_from_blob(self, file_instance, to_storage):
+    def download_from_blob(self, file_instance, to_storage, tantalus_api):
         """ Transfer a file from blob to a server.
 
         This should be called on the from server.
@@ -97,7 +97,13 @@ class AzureTransfer(object):
         cloud_filepath = file_instance['filepath']
         cloud_container, cloud_blobname = cloud_filepath.split('/', 1)
         assert cloud_container == file_instance['storage']['storage_container']
-        local_filepath = get_new_filepath(to_storage, file_instance['file_resource'])
+
+        # Get the file resource associated with the file instance
+        file_resource = tantalus_api.get(
+            'file_resource',
+            id=file_instance['file_resource'])
+
+        local_filepath = get_new_filepath(to_storage, file_resource)
 
         make_dirs(os.path.dirname(local_filepath))
 
@@ -130,14 +136,19 @@ class AzureTransfer(object):
             return False
         return True
 
-    def upload_to_blob(self, file_instance, to_storage):
-        """ Transfer a file from a server to blob.
+    def upload_to_blob(self, file_instance, to_storage, tantalus_api):
+        """Transfer a file from a server to blob.
 
         This should be called on the from server.
         """
-
         local_filepath = file_instance['filepath']
-        cloud_filepath = get_new_filepath(to_storage, file_instance['file_resource'])
+
+        # Get the file resource associated with the file instance
+        file_resource = tantalus_api.get(
+            'file_resource',
+            id=file_instance['file_resource'])
+
+        cloud_filepath = get_new_filepath(to_storage, file_resource)
         cloud_container, cloud_blobname = cloud_filepath.split('/', 1)
         assert cloud_container == to_storage['storage_container']
 
@@ -192,7 +203,7 @@ def blob_to_blob_transfer_closure(source_storage, destination_storage):
                     + datetime.timedelta(hours=200)),))
 
 
-    def transfer_function(source_file, _):
+    def transfer_function(source_file, *_):
         """Transfer function aware of source and destination Azure storages.
 
         Using non-local source_account and destination_account. This
@@ -258,11 +269,17 @@ def check_file_same_local(file_resource, filepath):
     return True
 
 
-def rsync_file(file_instance, to_storage):
+def rsync_file(file_instance, to_storage, tantalus_api):
     """ Rsync a single file from one storage to another
     """
 
-    local_filepath = get_new_filepath(to_storage, file_instance['file_resource'])
+    # Get the file resource associated with the file instance
+    file_resource = tantalus_api.get(
+        'file_resource',
+        id=file_instance['file_resource'])
+
+    local_filepath = get_new_filepath(to_storage, file_resource)
+
     remote_filepath = file_instance['filepath']
 
     if file_instance['file_resource']['is_folder']:
@@ -315,10 +332,8 @@ def get_file_transfer_function(from_storage, to_storage):
         return blob_to_blob_transfer_closure(from_storage, to_storage)
     elif from_storage['storage_type'] == 'server' and to_storage['storage_type'] == 'blob':
         return AzureTransfer(to_storage).upload_to_blob
-
     elif from_storage['storage_type'] == 'blob' and to_storage['storage_type'] == 'server':
         return AzureTransfer(from_storage).download_from_blob
-
     elif from_storage['storage_type'] == 'server' and to_storage['storage_type'] == 'server':
         return rsync_file
 
@@ -401,7 +416,7 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
                 id=from_file_instance['id'],
             )
 
-            f_transfer(from_file_instance, to_storage)
+            f_transfer(from_file_instance, to_storage, tantalus_api)
 
             tantalus_api.get_or_create(
                 'file_instance',
