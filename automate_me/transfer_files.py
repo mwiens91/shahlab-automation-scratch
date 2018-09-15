@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import datetime
 import json
 import logging
@@ -64,11 +65,11 @@ class TransferProgress(object):
         percent = 'NA'
         if total > 0:
             percent = '{:.2f}'.format(100. * float(current) / total)
-        print '{}/{} ({}%) in {}s'.format(
+        print('{}/{} ({}%) in {}s'.format(
             _as_gb(current),
             _as_gb(total),
             percent,
-            elapsed)
+            elapsed))
 
 
 def get_new_filepath(storage, file_resource):
@@ -351,8 +352,10 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
                 storage_names.append(file_instance['storage']['name'])
 
             if to_storage_name in storage_names:
-                print 'skipping file resource {} that already exists on storage {}'.format(
-                    file_resource['filename'], to_storage_name)
+                print(
+                    'skipping file resource {} that already exists on storage {}'.format(
+                        file_resource['filename'],
+                        to_storage_name))
 
             from_file_instance = None
             for file_instance in file_resource['file_instances']:
