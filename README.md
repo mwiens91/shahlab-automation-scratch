@@ -104,3 +104,7 @@ where the JSON dump is
   "storage_type": "server"
 }
 ```
+
+### [transfer_files.py](automate_me/transfer_files.py)
+
+This one's a WIP. Examples when the code's complete.
