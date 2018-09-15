@@ -334,14 +334,17 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
     to_storage = tantalus_api.get('storage', name=to_storage_name)
     from_storage = tantalus_api.get('storage', name=from_storage_name)
 
-    # Get credentials for each storage - transform from credential ID to
-    # the credential itself
-    to_storage['credentials'] = tantalus_api.get(
-        'storage_azure_blob_credentials',
-        id=to_storage['credentials'])
-    from_storage['credentials'] = tantalus_api.get(
-        'storage_azure_blob_credentials',
-        id=from_storage['credentials'])
+    # For blob storages, get credentials for each storage by
+    # transforming from credential ID to the credential itself
+    if to_storage['storage_type'] == 'blob':
+        to_storage['credentials'] = tantalus_api.get(
+            'storage_azure_blob_credentials',
+            id=to_storage['credentials'])
+
+    if from_storage['storage_type'] == 'blob':
+        from_storage['credentials'] = tantalus_api.get(
+            'storage_azure_blob_credentials',
+            id=from_storage['credentials'])
 
     f_transfer = get_file_transfer_function(from_storage, to_storage)
 
