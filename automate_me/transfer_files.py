@@ -74,7 +74,7 @@ class TransferProgress(object):
 
 def get_new_filepath(storage, file_resource):
     # TODO
-    raise
+    raise NotImplementedError
 
 
 class AzureTransfer(object):
