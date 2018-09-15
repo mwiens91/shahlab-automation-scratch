@@ -360,7 +360,11 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
                         file_resource['filename'],
                         to_storage_name))
 
+                # Skip this file resource
+                continue
+
             from_file_instance = None
+
             for file_instance in file_resource['file_instances']:
                 if file_instance['storage']['name'] == from_storage_name:
                     from_file_instance = file_instance
