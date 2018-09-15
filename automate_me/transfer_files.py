@@ -73,8 +73,21 @@ class TransferProgress(object):
 
 
 def get_new_filepath(storage, file_resource):
-    # TODO
-    raise NotImplementedError
+    """Emulate Tantalus' get_filepath method logic."""
+    if storage['storage_type'] == 'server':
+        return os.path.join(
+            storage['storage_directory'],
+            file_resource['filename'].strip('/')
+        )
+    elif storage['storage_type'] == 'blob':
+        return '/'.join([
+            storage['storage_container'],
+            file_resource['filename'].strip('/')
+        ])
+    else:
+        # Storage type not supported!
+        raise NotImplementedError
+
 
 
 class AzureTransfer(object):
