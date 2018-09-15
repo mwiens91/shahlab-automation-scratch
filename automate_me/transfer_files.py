@@ -349,10 +349,20 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
     f_transfer = get_file_transfer_function(from_storage, to_storage)
 
     for dataset in tantalus_api.list('sequence_dataset', tags__name=tag_name):
-        for file_resource in dataset['file_resources']:
+        for file_resource_id in dataset['file_resources']:
+            # Get the file resource corresponding to the ID
+            file_resource = tantalus_api.get(
+                'file_resource',
+                id=file_resource_id)
+
             storage_names = []
+
             for file_instance in file_resource['file_instances']:
-                storage_names.append(file_instance['storage']['name'])
+                storage_id = file_instance['storage']
+                storage_name = tantalus_api.get(
+                    'storage',
+                    id=storage_id,)['name']
+                storage_names.append(storage_name)
 
             if to_storage_name in storage_names:
                 print(
@@ -366,13 +376,30 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
             from_file_instance = None
 
             for file_instance in file_resource['file_instances']:
-                if file_instance['storage']['name'] == from_storage_name:
+                # TODO(mwiens91): We're querying Tantalus for storage
+                # names above and here. Two requests for identical
+                # information. We only really need to do it once. Fix
+                # this by saving the storage name in the file_instance
+                # dictionary after the first set of API requests.
+                storage_id = file_instance['storage']
+                storage_name = tantalus_api.get(
+                    'storage',
+                    id=storage_id,)['name']
+
+                if storage_name == from_storage_name:
                     from_file_instance = file_instance
 
             if from_file_instance is None:
                 raise FileDoesNotExist(
                     'file instance for file resource {} does not exist on source storage {}'.format(
                         file_resource['filename'], from_storage_name))
+
+            # Get a "nicer" version of the file instance with more
+            # nested model relationships
+            from_file_instance = tantalus_api.get(
+                'file_instance',
+                id=from_file_instance['id'],
+            )
 
             f_transfer(from_file_instance, to_storage)
 
