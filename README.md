@@ -107,4 +107,16 @@ where the JSON dump is
 
 ### [transfer_files.py](automate_me/transfer_files.py)
 
-This one's a WIP. Examples when the code's complete.
+```
+python automate_me/transfer_files.py '{"tag_name": "my-fantastic-tag", "from_storage": "my-fantastic-storage-name", "to_storage": "my-other-fantastic-storage-name"}'
+```
+
+where the JSON dump is
+
+```json
+{
+  "tag_name": "my-fantastic-tag",
+  "from_storage": "my-fantastic-storage-name",
+  "to_storage": "my-other-fantastic-storage-name"
+}
+```
