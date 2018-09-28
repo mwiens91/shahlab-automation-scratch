@@ -50,6 +50,10 @@ class TantalusApi(BasicAPIClient):
             tag_name: An optional string (or None) containing the name
                 of the tag to associate with the model instances
                 represented in the model_dictionaries.
+
+        Raises:
+            RuntimeError: The request returned with a non-2xx status
+                code.
         """
         endpoint_url = self.join_urls(
             self.base_api_url,
@@ -68,6 +72,11 @@ class TantalusApi(BasicAPIClient):
             # Ensure that the request was successful
             assert 200 <= r.status_code < 300
         except AssertionError:
-            print("An HTTP request to %s failed with status %s." %
-                  (endpoint_url, r.status_code),
-                  file=sys.stderr,)
+            msg = ("Request to {url} failed with status {status_code}:\n"
+                   "The reponse from the request was as follows:\n\n"
+                   "{content}").format(
+                       url=endpoint_url,
+                       status_code=r.status_code,
+                       content=r.text,)
+
+            raise RuntimeError(msg)
