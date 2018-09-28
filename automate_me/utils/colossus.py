@@ -24,14 +24,14 @@ class ColossusApi(BasicAPIClient):
             username=os.environ.get('COLOSSUS_API_USERNAME'),
             password=os.environ.get('COLOSSUS_API_PASSWORD'))
 
-    def get_colossus_sublibraries_from_library_id(library_id):
+    def get_colossus_sublibraries_from_library_id(self, library_id):
         """ Gets the sublibrary information from a library id.
         """
 
         return list(self.list('sublibraries', library__pool_id=library_id))
 
 
-    def query_libraries_by_library_id(library_id):
+    def query_libraries_by_library_id(self, library_id):
         """ Gets a library by its library_id.
         """
 
