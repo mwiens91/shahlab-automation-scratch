@@ -22,6 +22,8 @@ TANTALUS_API_URL = 'http://tantalus.bcgsc.ca/api/'
 
 class TantalusApi(BasicAPIClient):
     """Tantalus API class."""
+    # Parameters used for pagination
+    pagination_param_names = ('limit', 'offset')
 
     def __init__(self):
         """Set up authentication using basic authentication.
@@ -35,6 +37,27 @@ class TantalusApi(BasicAPIClient):
             os.environ.get('TANTALUS_API_URL', TANTALUS_API_URL),
             username=os.environ.get('TANTALUS_API_USERNAME'),
             password=os.environ.get('TANTALUS_API_PASSWORD'))
+
+    def get_list_pagination_initial_params(self, params):
+        """Get initial pagination parameters specific to this API.
+
+        For example, offset and limit for offset/limit pagination.
+
+        Args:
+            params: A dict which is changed in place.
+        """
+        params['limit'] = 100
+        params['offset'] = 0
+
+    def get_list_pagination_next_page_params(self, params):
+        """Get next page pagination parameters specific to this API.
+
+        For example, offset and limit for offset/limit pagination.
+
+        Args:
+            params: A dict which is changed in place.
+        """
+        params['offset'] += params['limit']
 
     @staticmethod
     def join_urls(*pieces):

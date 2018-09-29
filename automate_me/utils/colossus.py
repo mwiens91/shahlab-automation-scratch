@@ -10,6 +10,8 @@ COLOSSUS_API_URL = 'http://colossus.bcgsc.ca/api/'
 
 class ColossusApi(BasicAPIClient):
     """ Colossus API class. """
+    # Parameters used for pagination
+    pagination_param_names = ('page',)
 
     def __init__(self):
         """ Set up authentication using basic authentication.
@@ -23,6 +25,26 @@ class ColossusApi(BasicAPIClient):
             os.environ.get('COLOSSUS_API_URL', COLOSSUS_API_URL),
             username=os.environ.get('COLOSSUS_API_USERNAME'),
             password=os.environ.get('COLOSSUS_API_PASSWORD'))
+
+    def get_list_pagination_initial_params(self, params):
+        """Get initial pagination parameters specific to this API.
+
+        For example, offset and limit for offset/limit pagination.
+
+        Args:
+            params: A dict which is changed in place.
+        """
+        params['page'] = 1
+
+    def get_list_pagination_next_page_params(self, params):
+        """Get next page pagination parameters specific to this API.
+
+        For example, offset and limit for offset/limit pagination.
+
+        Args:
+            params: A dict which is changed in place.
+        """
+        params['page'] += 1
 
     def get_colossus_sublibraries_from_library_id(self, library_id):
         """ Gets the sublibrary information from a library id.
