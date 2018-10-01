@@ -386,10 +386,12 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
             storage_names = []
 
             for file_instance in file_resource['file_instances']:
-                storage_id = file_instance['storage']
+                storage_id = file_instance['storage']['id']
+
                 storage_name = tantalus_api.get(
                     'storage',
-                    id=storage_id,)['name']
+                    id=int(storage_id),
+                )['name']
                 storage_names.append(storage_name)
 
             if to_storage_name in storage_names:
@@ -409,10 +411,11 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
                 # information. We only really need to do it once. Fix
                 # this by saving the storage name in the file_instance
                 # dictionary after the first set of API requests.
-                storage_id = file_instance['storage']
+                storage_id = file_instance['storage']['id']
                 storage_name = tantalus_api.get(
                     'storage',
-                    id=storage_id,)['name']
+                    id=int(storage_id),
+                )['name']
 
                 if storage_name == from_storage_name:
                     from_file_instance = file_instance
