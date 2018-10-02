@@ -114,9 +114,14 @@ class BasicAPIClient(object):
                         raise Exception('field {} not in {}'.format(
                             field_name, table_name))
 
-                    if result[field_name] != field_value:
+                    try:
+                        result_field = result[field_name]['id']
+                    except TypeError:
+                        result_field = result[field_name]
+
+                    if result_field != field_value:
                         raise Exception('field {} mismatches, set to {} not {}'.format(
-                            field_name, result[field_name], field_value))
+                            field_name, result_field, field_value))
 
                 yield result
 
