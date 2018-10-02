@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import json
 import os
 import string
 import sys
@@ -10,9 +9,10 @@ from utils.colossus import (
     get_colossus_sublibraries_from_library_id,
     query_libraries_by_library_id,)
 from utils.dlp import create_sequence_dataset_models, fastq_paired_end_check
-from utils.gsc import get_sequencing_instrument, GSCAPI
-from utils.tantalus import TantalusApi
 from utils.filecopy import rsync_file
+from utils.gsc import get_sequencing_instrument, GSCAPI
+from utils.runtime_args import parse_runtime_args
+from utils.tantalus import TantalusApi
 
 
 solexa_run_type_map = {
@@ -219,7 +219,7 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
 
 if __name__ == '__main__':
     # Parse the incoming arguments
-    args = json.loads(sys.argv[1])
+    args = parse_runtime_args()
 
     # Connect to the Tantalus API (this requires appropriate environment
     # variables defined)

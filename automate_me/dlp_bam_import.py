@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import datetime
-import json
 import os
 import sys
 import time
@@ -9,6 +8,7 @@ import azure.storage.blob
 import pandas as pd
 import pysam
 from utils.dlp import create_sequence_dataset_models
+from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
 
 
@@ -221,7 +221,7 @@ def create_file_metadata(file_info, bam_header):
 
 if __name__ == '__main__':
     # Get arguments
-    args = json.loads(sys.argv[1])
+    args = parse_runtime_args()
 
     # Connect to the Tantalus API (this requires appropriate environment
     # variables defined)

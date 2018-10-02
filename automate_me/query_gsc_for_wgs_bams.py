@@ -2,15 +2,15 @@
 
 from __future__ import absolute_import
 from datetime import datetime
-import json
 import os
 import sys
 import time
 import pandas as pd
+from utils.filecopy import rsync_file
 from utils.gsc import get_sequencing_instrument, GSCAPI
+from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
 from utils.utils import get_lanes_str
-from utils.filecopy import rsync_file
 
 
 def convert_time(a):
@@ -444,7 +444,7 @@ def valid_date(s):
 
 if __name__ == '__main__':
     # Parse the incoming arguments
-    args = json.loads(sys.argv[1])
+    args = parse_runtime_args()
 
     # Convert the date to the format we want
     if 'skip_older_than' in args:

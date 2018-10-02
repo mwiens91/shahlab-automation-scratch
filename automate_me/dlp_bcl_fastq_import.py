@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import json
 import os
 import re
 import sys
@@ -8,6 +7,7 @@ import time
 import pandas as pd
 from utils.colossus import get_colossus_sublibraries_from_library_id
 from utils.dlp import create_sequence_dataset_models, fastq_paired_end_check
+from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
 
 
@@ -143,7 +143,7 @@ def get_fastq_info(output_dir, flowcell_id, storage_directory):
 
 if __name__ == '__main__':
     # Parse the incoming arguments
-    args = json.loads(sys.argv[1])
+    args = parse_runtime_args()
 
     # Connect to the Tantalus API (this requires appropriate environment
     # variables defined)

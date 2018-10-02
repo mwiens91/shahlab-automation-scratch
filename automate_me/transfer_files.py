@@ -2,13 +2,13 @@
 
 from __future__ import print_function
 import datetime
-import json
 import logging
 import os
 import subprocess
 import sys
 import time
 from azure.storage.blob import BlockBlobService, ContainerPermissions
+from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
 from utils.utils import make_dirs
 
@@ -444,7 +444,7 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
 
 if __name__ == '__main__':
     # Parse the incoming arguments
-    args = json.loads(sys.argv[1])
+    args = parse_runtime_args()
 
     # Transfer some files
     transfer_files(
