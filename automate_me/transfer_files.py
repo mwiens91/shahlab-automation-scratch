@@ -173,21 +173,22 @@ class AzureTransfer(object):
             raise FileDoesNotExist(error_message)
 
         if self.block_blob_service.exists(cloud_container, cloud_blobname):
-            if self._check_file_same_blob(file_instance['file_resource'], cloud_container, cloud_blobname):
+            if self._check_file_same_blob(file_resource, cloud_container, cloud_blobname):
                 return
 
             error_message = "target file {filepath} already exists on {storage}".format(
                 filepath=cloud_filepath,
                 storage=to_storage['name'])
             raise FileAlreadyExists(error_message)
-
+        
         self.block_blob_service.create_blob_from_path(
             cloud_container,
             cloud_blobname,
             local_filepath,
             progress_callback=TransferProgress().print_progress,
-            max_connections=1,
+            max_connections=16,
             timeout=10*60*64)
+
 
 
 def blob_to_blob_transfer_closure(source_storage, destination_storage):
