@@ -112,7 +112,7 @@ dlp_fastq_template = os.path.join(
     '{cell_sample_id}_{dlp_library_id}_{index_sequence}_{read_end}.fastq{extension}')
 
 
-def import_gsc_dlp_paired_fastqs(colossus_api, dlp_library_id, storage, existing_lanes):
+def import_gsc_dlp_paired_fastqs(colossus_api,tantalus_api, dlp_library_id, storage, existing_lanes, tag_name):
     primary_sample_id = colossus_api.query_libraries_by_library_id(dlp_library_id)['sample']['sample_id']
     cell_samples = query_colossus_dlp_cell_info(colossus_api, dlp_library_id)
     rev_comp_overrides = query_colossus_dlp_rev_comp_override(colossus_api, dlp_library_id)
@@ -241,9 +241,7 @@ def import_gsc_dlp_paired_fastqs(colossus_api, dlp_library_id, storage, existing
 
     fastq_paired_end_check(fastq_file_info)
 
-    json_list = create_sequence_dataset_models(fastq_file_info, storage['name'])
-
-    return json_list
+    create_sequence_dataset_models(fastq_file_info, storage['name'], tag_name, tantalus_api)
 
 
 if __name__ == '__main__':
@@ -256,32 +254,29 @@ if __name__ == '__main__':
 
     storage = tantalus_api.get('storage_server', name=args['storage_name'])
 
-    # Query tantalus for existing lanes
-    existing_lanes = set()
-    for lane in tantalus_api.list('sequencing_lane', dna_library__library_id=args['dlp_library_id']):
-        existing_lanes.add((lane['flowcell_id'], lane['lane_number']))
-
-    # Query GSC for FastQs
-    json_to_post = import_gsc_dlp_paired_fastqs(
-        colossus_api,
-        args['dlp_library_id'],
-        storage,
-        existing_lanes)
-
-    # Check if we skipped all files
-    if not json_to_post:
-        logging.error('no data to import')
-        sys.exit()
-
     # Get the tag name if it was passed in
     try:
         tag_name = args['tag_name']
     except KeyError:
         tag_name = None
 
-    # Post data to Tantalus
-    tantalus_api.sequence_dataset_add(
-        model_dictionaries=json_to_post,
-        tag_name=tag_name)
+    # Query tantalus for existing lanes
+    existing_lanes = set()
+    for lane in tantalus_api.list('sequencing_lane', dna_library__library_id=args['dlp_library_id']):
+        existing_lanes.add((lane['flowcell_id'], lane['lane_number']))
+
+    # Query GSC for FastQs
+    import_gsc_dlp_paired_fastqs(
+        colossus_api,
+        tantalus_api,
+        args['dlp_library_id'],
+        storage,
+        existing_lanes,
+        tag_name)
+
+    # Check if we skipped all files
+    if not json_to_post:
+        logging.error('no data to import')
+        sys.exit()
 
     logging.info('import succeeded')
