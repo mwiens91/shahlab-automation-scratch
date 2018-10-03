@@ -7,6 +7,8 @@ import os
 import subprocess
 import sys
 import time
+import traceback
+
 from azure.storage.blob import BlockBlobService, ContainerPermissions
 from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
@@ -180,7 +182,7 @@ class AzureTransfer(object):
                 filepath=cloud_filepath,
                 storage=to_storage['name'])
             raise FileAlreadyExists(error_message)
-        
+
         self.block_blob_service.create_blob_from_path(
             cloud_container,
             cloud_blobname,
@@ -433,7 +435,19 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
                 id=from_file_instance['id'],
             )
 
-            f_transfer(from_file_instance, to_storage, tantalus_api)
+
+            print('starting transfer {} to {}'.format(file_resource['filename'], to_storage['name']))
+            success = False
+            for retry in range(3):
+                try:
+                    f_transfer(from_file_instance, to_storage, tantalus_api)
+                    success = True
+                    break
+                except:
+                    print('transfer failed')
+                    traceback.print_exc()
+            if not success:
+                raise Exception('failed all retry attempts')
 
             tantalus_api.get_or_create(
                 'file_instance',

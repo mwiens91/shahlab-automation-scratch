@@ -185,6 +185,9 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
             tantalus_filename,
         )
 
+        if fastq_path.endswith('.gz'):
+            tantalus_path += '.gz'
+
         rsync_file(fastq_path, tantalus_path)
 
         fastq_file_info.append(dict(
@@ -242,4 +245,3 @@ if __name__ == '__main__':
     tantalus_api.sequence_dataset_add(
         model_dictionaries=json_to_post,
         tag_name=tag_name)
-
