@@ -249,7 +249,12 @@ def add_gsc_bam_lanes(sample, library, lane_infos):
     return json_list
 
 
-def import_gsc_library(libraries, storage, skip_file_import=False, skip_older_than=None):
+def import_gsc_library(libraries,
+        storage,
+        tantalus_api,
+        skip_file_import=False,
+        skip_older_than=None,
+        tag_name=None):
     """
     Copy GSC libraries to a storage and return metadata json.
     """

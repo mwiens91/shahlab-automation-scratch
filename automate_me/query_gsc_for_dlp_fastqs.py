@@ -115,7 +115,7 @@ dlp_fastq_template = os.path.join(
     '{cell_sample_id}_{dlp_library_id}_{index_sequence}_{read_end}.fastq')
 
 
-def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
+def import_gsc_dlp_paired_fastqs(dlp_library_id, storage, tag_name, tantalus_api):
     primary_sample_id = query_libraries_by_library_id(dlp_library_id)['sample']['sample_id']
     cell_samples = query_colossus_dlp_cell_info(dlp_library_id)
     rev_comp_overrides = query_colossus_dlp_rev_comp_override(dlp_library_id)
@@ -227,7 +227,7 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
 
     fastq_paired_end_check(fastq_file_info)
 
-    json_list = create_sequence_dataset_models(fastq_file_info, storage['name'])
+    json_list = create_sequence_dataset_models(fastq_file_info, storage['name'], tag_name, tantalus_api)
 
     return json_list
 
@@ -240,20 +240,17 @@ if __name__ == '__main__':
     # variables defined)
     tantalus_api = TantalusApi()
 
-    storage = tantalus_api.get('storage_server', name=args['storage_name'])
-
-    # Query GSC for FastQs
-    json_to_post = import_gsc_dlp_paired_fastqs(
-        args['dlp_library_id'],
-        storage)
-
     # Get the tag name if it was passed in
     try:
         tag_name = args['tag_name']
     except KeyError:
         tag_name = None
 
-    # Post data to Tantalus
-    tantalus_api.sequence_dataset_add(
-        model_dictionaries=json_to_post,
-        tag_name=tag_name)
+    storage = tantalus_api.get('storage_server', name=args['storage_name'])
+
+    # Query GSC for FastQs
+    import_gsc_dlp_paired_fastqs(
+        args['dlp_library_id'],
+        storage,
+        tag_name,
+        tantalus_api)

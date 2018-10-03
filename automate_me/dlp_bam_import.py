@@ -132,7 +132,12 @@ def get_created_time_blob(blob_service, container, blobname):
     return created_time
 
 
-def import_dlp_realign_bams(storage_name, storage_type, bam_filenames, **kwargs):
+def import_dlp_realign_bams(storage_name,
+        storage_type,
+        bam_filenames,
+        tantalus_api,
+        tag_name=None,
+        **kwargs):
     metadata = []
 
     if storage_type == 'blob':
@@ -144,7 +149,7 @@ def import_dlp_realign_bams(storage_name, storage_type, bam_filenames, **kwargs)
     else:
         raise ValueError('unsupported storage type {}'.format(storage_type))
 
-    return create_sequence_dataset_models(metadata, storage_name)
+    return create_sequence_dataset_models(metadata, storage_name, tag_name, tantalus_api)
 
 
 def import_dlp_realign_bam_blob(bam_filename, container_name):
@@ -263,21 +268,17 @@ if __name__ == '__main__':
         else:
             raise e
 
-    # Import DLP BAMs
-    json_to_post = import_dlp_realign_bams(
-        args['storage_name'],
-        args['storage_type'],
-        args['bam_filenames'],
-        storage_directory=storage_directory,
-        blob_container_name=blob_container_name)
-
     # Get the tag name if it was passed in
     try:
         tag_name = args['tag_name']
     except KeyError:
         tag_name = None
 
-    # Post data to Tantalus
-    tantalus_api.sequence_dataset_add(
-        model_dictionaries=json_to_post,
+    # Import DLP BAMs
+    import_dlp_realign_bams(
+        args['storage_name'],
+        args['storage_type'],
+        args['bam_filenames'],
+        tantalus_api,
+        blob_container_name=blob_container_name,
         tag_name=tag_name)

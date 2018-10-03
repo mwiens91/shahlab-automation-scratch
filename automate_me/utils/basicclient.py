@@ -123,7 +123,17 @@ class BasicAPIClient(object):
                     except TypeError:
                         result_field = result[field_name]
 
-                    if result_field != field_value:
+                    # Fields to exclude. Note that * to many
+                    # relationships are problems because filter for
+                    # exactly one related row will work even if there
+                    # are many related rows.
+                    exclude_fields = (
+                        'created',  # datetimes have different formats
+                        'sequence_lanes',   # in list is nested, but not in create
+                        'file_resources',   # *->many are issues
+                    )
+
+                    if result_field != field_value and field_name not in exclude_fields:
                         raise Exception('field {} mismatches, set to {} not {}'.format(
                             field_name, result_field, field_value))
 

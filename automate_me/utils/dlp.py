@@ -34,14 +34,16 @@ def fastq_paired_end_check(file_info):
                     read_end, fastq_id))
 
 
-def create_sequence_dataset_models(file_info, storage_name):
+def create_sequence_dataset_models(file_info, storage_name, tag_name, tantalus_api):
     """ Create tantalus sequence models for a list of files """
 
     json_list = []
 
-    storage = dict(
-        name=storage_name,
-    )
+    # Get storage and tag PKs
+    storage_pk = tantalus_api.get('storage', name=storage_name)['id']
+
+    if tag_name is not None:
+        tag_pk = tantalus_api.get('sequence_dataset_tag', name=tag_name)['id']
 
     # Sort files by dataset
     dataset_info = collections.defaultdict(list)
@@ -57,30 +59,37 @@ def create_sequence_dataset_models(file_info, storage_name):
 
     # Create datasets
     for dataset_name, infos in dataset_info.iteritems():
-        sample = dict(
-            sample_id=infos[0]['sample_id'],
-        )
+        # Get library PK
+        library_id = infos[0]['library_id']
+        library_pk = tantalus_api.get('dna_library',
+            library_id=library_id,
+        )['id']
 
-        library = dict(
-            library_id=infos[0]['library_id'],
-            library_type=infos[0]['library_type'],
-            index_format=infos[0]['index_format'],
-        )
+        # Get sample PK
+        sample_id = infos[0]['sample_id']
+        sample_pk = tantalus_api.get('sample',
+            sample_id=sample_id,
+        )['id']
 
+        # Build up sequence dataset attrs; we'll add to this as we
+        # proceed throughout the function
         sequence_dataset = dict(
             name=dataset_name,
             dataset_type=infos[0]['dataset_type'],
-            sample=sample,
-            library=library,
+            sample=sample_pk,
+            library=library_pk,
             sequence_lanes=[],
             file_resources=[],
-            model='SequenceDataset',
         )
 
         # Add in BAM specific items
         if infos[0]['dataset_type'] == 'BAM':
             sequence_dataset['aligner'] = infos['aligner_name']
             sequence_dataset['reference_genome'] = infos['ref_genome']
+
+        # Add in the tag if we have one
+        if tag_name is not None:
+            sequence_dataset['tags'] = [tag_pk,]
 
         for info in infos:
             # Check consistency for fields used for dataset
@@ -97,8 +106,14 @@ def create_sequence_dataset_models(file_info, storage_name):
 
             for sequence_lane in info['sequence_lanes']:
                 sequence_lane = dict(sequence_lane)
-                sequence_lane['dna_library'] = library
-                sequence_dataset['sequence_lanes'].append(sequence_lane)
+                sequence_lane['dna_library'] = library_pk
+                sequence_lane['lane_number'] = str(sequence_lane['lane_number'])
+
+                sequence_lane = tantalus_api.get_or_create(
+                    'sequencing_lane',
+                    **sequence_lane)
+
+                sequence_dataset['sequence_lanes'].append(sequence_lane['id'])
 
             sequence_file_info = dict(
                 index_sequence=info['index_sequence'],
@@ -107,28 +122,34 @@ def create_sequence_dataset_models(file_info, storage_name):
             if 'read_end' in info:
                 sequence_file_info['read_end'] = info['read_end']
 
-            file_resource = dict(
+            file_resource = tantalus_api.get_or_create(
+                'file_resource',
                 size=info['size'],
                 created=info['created'],
                 file_type=info['file_type'],
                 compression=info['compression'],
                 filename=info['filename'],
-                sequencefileinfo=sequence_file_info,
             )
 
-            sequence_dataset['file_resources'].append(file_resource)
+            sequence_file_info = tantalus_api.get_or_create(
+                'sequence_file_info',
+                file_resource=file_resource['id'],
+                **sequence_file_info)
+
+            sequence_dataset['file_resources'].append(file_resource['id'])
 
             file_instance = dict(
-                storage=storage,
-                file_resource=file_resource,
-                model='FileInstance',
+                storage=storage_pk,
+                file_resource=file_resource['id'],
             )
 
             if 'filename_override' in info:
                 file_instance['filename_override'] = info['filename_override']
 
-            json_list.append(file_instance)
+            tantalus_api.get_or_create(
+                'file_instance',
+                **file_instance)
 
-        json_list.append(sequence_dataset)
-
-    return json_list
+            tantalus_api.get_or_create(
+                'sequence_dataset',
+                **sequence_dataset)

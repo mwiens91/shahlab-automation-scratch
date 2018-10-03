@@ -45,7 +45,13 @@ def query_colossus_dlp_cell_info(library_id):
     return row_column_map
 
 
-def load_brc_fastqs(flowcell_id, storage_name, storage_directory, output_dir):
+def load_brc_fastqs(
+        flowcell_id,
+        storage_name,
+        storage_directory,
+        output_dir,
+        tantalus_api,
+        tag_name=None):
     # Check for .. in file path
     if ".." in output_dir:
         raise Exception("Invalid path for output_dir. \'..\' detected")
@@ -62,7 +68,7 @@ def load_brc_fastqs(flowcell_id, storage_name, storage_directory, output_dir):
 
     fastq_paired_end_check(fastq_file_info)
 
-    json_list = create_sequence_dataset_models(fastq_file_info, storage_name)
+    json_list = create_sequence_dataset_models(fastq_file_info, storage_name, tag_name, tantalus_api)
 
     return json_list
 
@@ -160,20 +166,17 @@ if __name__ == '__main__':
     # variables defined)
     tantalus_api = TantalusApi()
 
-    # Import fastqs
-    json_to_post = load_brc_fastqs(
-        args['flowcell_id'],
-        args['storage_name'],
-        args['storage_directory'],
-        args['output_dir'])
-
     # Get the tag name if it was passed in
     try:
         tag_name = args['tag_name']
     except KeyError:
         tag_name = None
 
-    # Post data to Tantalus
-    tantalus_api.sequence_dataset_add(
-        model_dictionaries=json_to_post,
+    # Import fastqs
+    load_brc_fastqs(
+        args['flowcell_id'],
+        args['storage_name'],
+        args['storage_directory'],
+        args['output_dir'],
+        tantalus_api,
         tag_name=tag_name)

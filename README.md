@@ -58,7 +58,7 @@ where the JSON dump is
 ### [query_gsc_for_dlp_fastqs](automate_me/query_gsc_for_dlp_fastqs.py)
 
 ```
-python automate_me/query_gsc_for_dlp_fastqs.py '{"dlp_library_id": "A96225C", "gsc_library_id": "PX0884"}'
+python automate_me/query_gsc_for_dlp_fastqs.py '{"dlp_library_id": "A96225C", "gsc_library_id": "PX0884", "storage_name": "shahlab"}'
 ```
 
 where the JSON dump is
@@ -66,7 +66,8 @@ where the JSON dump is
 ```json
 {
   "dlp_library_id": "A96225C",
-  "gsc_library_id": "PX0884"
+  "gsc_library_id": "PX0884",
+  "storage_name": "shahlab"
 }
 ```
 
