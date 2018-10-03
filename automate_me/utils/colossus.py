@@ -5,7 +5,7 @@ import requests
 from basicclient import BasicAPIClient
 
 
-COLOSSUS_API_URL = 'http://colossus.bcgsc.ca/api/'
+COLOSSUS_API_URL = os.environ.get('COLOSSUS_API_URL', 'http://colossus.bcgsc.ca/api/')
 
 
 class ColossusApi(BasicAPIClient):
