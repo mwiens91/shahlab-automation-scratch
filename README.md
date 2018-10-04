@@ -38,7 +38,7 @@ The variable names should be self-explanatory.
 Each of the tasks take in their arguments in the form of a single JSON
 dump. Here's a few examples for how you might run them:
 
-### [query_gsc_for_wgs_bams.py](automate_me/query_gsc_for_wgs_bams.py)
+### [query_gsc_for_wgs_bams](automate_me/query_gsc_for_wgs_bams.py)
 
 ```
 python automate_me/query_gsc_for_wgs_bams.py '{"tag_name": "gsc_wgs_bam_test2", "library_ids": ["A06679"], "skip_file_import": false, "skip_older_than": "2018-06-01"}'
@@ -105,7 +105,7 @@ where the JSON dump is
 }
 ```
 
-### [transfer_files.py](automate_me/transfer_files.py)
+### [transfer_files](automate_me/transfer_files.py)
 
 ```
 python automate_me/transfer_files.py '{"tag_name": "my-fantastic-tag", "from_storage": "my-fantastic-storage-name", "to_storage": "my-other-fantastic-storage-name"}'
