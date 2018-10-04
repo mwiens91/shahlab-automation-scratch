@@ -128,7 +128,7 @@ def import_dlp_realign_bams(storage_name, storage_type, bam_filenames, **kwargs)
             metadata.extend(import_dlp_realign_bam_blob(bam_filename, kwargs['blob_container_name']))
     elif storage_type == 'server':
         for bam_filename in bam_filenames:
-            metadata.extend(import_dlp_realign_bam_server(bam_filename))
+            metadata.extend(import_dlp_realign_bam_server(bam_filename, kwargs['storage_directory']))
     else:
         raise ValueError('unsupported storage type {}'.format(storage_type))
 
@@ -171,22 +171,26 @@ def import_dlp_realign_bam_blob(bam_filename, container_name):
     ]
 
 
-def import_dlp_realign_bam_server(bam_filename):
-    bai_filename = bam_filename + '.bai'
+def import_dlp_realign_bam_server(bam_filepath, storage_directory):
+    if not bam_filepath.startswith(storage_directory):
+        raise ValueError('{} not in storage directory {}'.format(
+            bam_filepath, storage_directory))
 
-    bam_header = get_bam_header_file(bam_filename)
+    bam_filename = bam_filepath.replace(storage_directory, '').lstrip('/')
+
+    bam_header = get_bam_header_file(bam_filepath)
 
     bam_info = {
         'filename': bam_filename,
-        'size': get_size_file(bam_filename),
-        'created': get_created_time_file(bam_filename),
+        'size': get_size_file(bam_filepath),
+        'created': get_created_time_file(bam_filepath),
         'file_type': 'BAM',
     }
 
     bai_info = {
-        'filename': bai_filename,
-        'size': get_size_file(bai_filename),
-        'created': get_created_time_file(bai_filename),
+        'filename': bam_filename + '.bai',
+        'size': get_size_file(bam_filepath + '.bai'),
+        'created': get_created_time_file(bam_filepath + '.bai'),
         'file_type': 'BAI',
     }
 
@@ -227,6 +231,16 @@ if __name__ == '__main__':
     # variables defined)
     tantalus_api = TantalusApi()
 
+    # Don't care about storage_directory if the storage type isn't
+    # blob
+    try:
+        storage_directory = args['storage_directory']
+    except KeyError as e:
+        if args['storage_type'] != 'server':
+            storage_directory = None
+        else:
+            raise e
+
     # Don't care about blob_container_names if the storage type isn't
     # blob
     try:
@@ -242,6 +256,7 @@ if __name__ == '__main__':
         args['storage_name'],
         args['storage_type'],
         args['bam_filenames'],
+        storage_directory=storage_directory,
         blob_container_name=blob_container_name)
 
     # Get the tag name if it was passed in
