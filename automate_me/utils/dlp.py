@@ -36,9 +36,6 @@ def fastq_paired_end_check(file_info):
 
 def create_sequence_dataset_models(file_info, storage_name, tag_name, tantalus_api):
     """ Create tantalus sequence models for a list of files """
-
-    json_list = []
-
     # Get storage and tag PKs
     storage_pk = tantalus_api.get('storage', name=storage_name)['id']
 
