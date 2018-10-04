@@ -120,17 +120,17 @@ def get_created_time_blob(blob_service, container, blobname):
     return created_time
 
 
-def import_bam(tantalus_api, storage_name, storage_type, dataset_name, dataset_type, bam_filename, **kwargs):
+def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=None):
+    storage = tantalus_api.get('storage', name=storage_name)
+
     metadata = []
 
-    if storage_type == 'blob':
-        bam_header, file_resource = import_bam_blob(bam_filename, kwargs['blob_container_name'])
-    elif storage_type == 'server':
-        bam_header, file_resource = import_bam_server(bam_filename, kwargs['storage_directory'])
+    if storage['storage_type'] == 'blob':
+        bam_header, file_resource = import_bam_blob(bam_filename, storage['storage_container'])
+    elif storage['storage_type'] == 'server':
+        bam_header, file_resource = import_bam_server(bam_filename, storage['storage_directory'])
     else:
-        raise ValueError('unsupported storage type {}'.format(storage_type))
-
-    storage_pk = tantalus_api.get('storage', name=storage_name)
+        raise ValueError('unsupported storage type {}'.format(storage['storage_type']))
 
     sample_pk = tantalus_api.get('sample', sample_id=bam_header['sample_id'])['id']
 
@@ -158,7 +158,7 @@ def import_bam(tantalus_api, storage_name, storage_type, dataset_name, dataset_t
         file_resource_pks.append(fr_pk)
         tantalus_api.get_or_create(
             'file_instance',
-            storage=storage_pk,
+            storage=storage['id'],
             file_resource=fr_pk,
         )
 
@@ -166,7 +166,7 @@ def import_bam(tantalus_api, storage_name, storage_type, dataset_name, dataset_t
 
     sequence_dataset = dict(
         name=dataset_name,
-        dataset_type=dataset_type,
+        dataset_type='BAM',
         sample=sample_pk,
         library=library_pk,
         sequence_lanes=sequence_lane_pks,
@@ -235,29 +235,6 @@ def import_dlp_realign_bam_server(bam_filepath, storage_directory):
     return bam_header, [bam_info, bai_info]
 
 
-def create_file_metadata(file_info, bam_header):
-    ref_genome = get_bam_ref_genome(bam_header)
-    aligner_name = get_bam_aligner_name(bam_header)
-    bam_header_info = get_bam_header_info(bam_header)
-
-    return dict(
-        dataset_type='BAM',
-        sample_id=bam_header_info['sample_id'],
-        library_id=bam_header_info['library_id'],
-        library_type='SC_WGS',
-        index_format='D',
-        sequence_lanes=bam_header_info['sequence_lanes'],
-        ref_genome=ref_genome,
-        aligner_name=aligner_name,
-        file_type=file_info['file_type'],
-        size=file_info['size'],
-        created=file_info['created'],
-        index_sequence=bam_header_info['index_sequence'],
-        compression='UNCOMPRESSED',
-        filename=file_info['filename'],
-    )
-
-
 if __name__ == '__main__':
     # Get arguments
     args = parse_runtime_args()
@@ -266,37 +243,15 @@ if __name__ == '__main__':
     # variables defined)
     tantalus_api = TantalusApi()
 
-    # Don't care about storage_directory if the storage type isn't
-    # blob
-    try:
-        storage_directory = args['storage_directory']
-    except KeyError as e:
-        if args['storage_type'] != 'server':
-            storage_directory = None
-        else:
-            raise e
-
-    # Don't care about blob_container_names if the storage type isn't
-    # blob
-    try:
-        blob_container_name = args['blob_container_name']
-    except KeyError as e:
-        if args['storage_type'] != 'blob':
-            blob_container_name = None
-        else:
-            raise e
-
     # Import BAMs
     dataset = import_bam(
         tantalus_api,
         args['storage_name'],
-        args['storage_type'],
         args['dataset_name'],
-        args['dataset_type'],
         args['bam_filename'],
-        args.get('tag_name'),
-        storage_directory=storage_directory,
-        blob_container_name=blob_container_name,
+        tag_name=args.get('tag_name'),
     )
 
     print 'dataset {}'.format(dataset['id'])
+
+# python automate_me/query_gsc_for_dlp_fastqs.py '{"storage_name": "shahlab", "dataset_name": "BAM-DAH370N-WGS-A41086 (lanes 52f27595) testdata chromosomes 21, 22", "bam_filename": "/shahlab/archive/test_datasets/DAH370N/wgs/A41086/hg19a/DAH370N_filtered.bam"}'
