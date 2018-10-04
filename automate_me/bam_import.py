@@ -141,6 +141,13 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
 
     library_pk = tantalus_api.get('dna_library', library_id=bam_header_info['library_id'])['id']
 
+    if tag_name is not None:
+        tag_pk = tantalus_api.get('sequence_dataset_tag', name=tag_name)['id']
+
+        tags = [tag_pk,]
+    else:
+        tags = []
+
     sequence_lane_pks = []
     for lane in bam_header_info['sequence_lanes']:
         lane_pk = tantalus_api.get(
@@ -167,8 +174,6 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
             file_resource=fr_pk,
         )
 
-    # TODO: tags
-
     sequence_dataset = tantalus_api.get_or_create(
         'sequence_dataset',
         name=dataset_name,
@@ -179,6 +184,7 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
         file_resources=file_resource_pks,
         reference_genome=ref_genome,
         aligner=aligner_name,
+        tags=tags,
     )
 
     return sequence_dataset
