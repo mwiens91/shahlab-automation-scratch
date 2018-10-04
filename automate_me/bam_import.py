@@ -132,12 +132,16 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
     else:
         raise ValueError('unsupported storage type {}'.format(storage['storage_type']))
 
-    sample_pk = tantalus_api.get('sample', sample_id=bam_header['sample_id'])['id']
+    ref_genome = get_bam_ref_genome(bam_header)
+    aligner_name = get_bam_aligner_name(bam_header)
+    bam_header_info = get_bam_header_info(bam_header)
 
-    library_pk = tantalus_api.get('dna_library', library_id=bam_header['library_id'])['id']
+    sample_pk = tantalus_api.get('sample', sample_id=bam_header_info['sample_id'])['id']
+
+    library_pk = tantalus_api.get('dna_library', library_id=bam_header_info['library_id'])['id']
 
     sequence_lane_pks = []
-    for lane in bam_header['sequence_lanes']:
+    for lane in bam_header_info['sequence_lanes']:
         lane_pk = tantalus_api.get(
             'sequencing_lane',
             flowcell_id=lane['flowcell_id'],
@@ -164,13 +168,15 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
 
     # TODO: tags
 
-    sequence_dataset = dict(
+    sequence_dataset = tantalus_api.get_or_create(
         name=dataset_name,
         dataset_type='BAM',
         sample=sample_pk,
         library=library_pk,
         sequence_lanes=sequence_lane_pks,
         file_resources=file_resource_pks,
+        reference_genome=ref_genome,
+        aligner=aligner_name,
     )
 
     return sequence_dataset
