@@ -7,6 +7,8 @@ import requests
 import coreapi
 from openapi_codec import OpenAPICodec
 from coreapi.codecs import JSONCodec
+from django.core.serializers.json import DjangoJSONEncoder
+import json
 
 
 class NotFoundError(Exception):
@@ -140,4 +142,9 @@ class BasicAPIClient(object):
         except NotFoundError:
             pass
 
+        for field_name, field_value in fields.iteritems():
+            fields[field_name] = eval(DjangoJSONEncoder().encode(field_value))
+        print(fields)
+
         return self.coreapi_client.action(self.coreapi_schema, [table_name, 'create'], params=fields)
+
