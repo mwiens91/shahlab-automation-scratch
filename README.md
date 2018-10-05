@@ -90,7 +90,7 @@ where the JSON dump is
 ### [dlp_bam_import](automate_me/dlp_bam_import.py)
 
 ```
-python automate_me/dlp_bam_import.py '{"bam_filenames": ["/shahlab/archive/single_cell_indexing/bam/A96174B/grch37/bwa-aln/numlanes_2/SA532X5XB00478-A96174B-R55-C10.bam", "/shahlab/archive/single_cell_indexing/bam/A96174B/grch37/bwa-aln/numlanes_2/SA532X5XB00478-A96174B-R55-C12.bam"], "storage_name": "shahlab", "storage_type": "server"}'
+python automate_me/dlp_bam_import.py '{"bam_filenames": ["/shahlab/archive/single_cell_indexing/bam/A96174B/grch37/bwa-aln/numlanes_2/SA532X5XB00478-A96174B-R55-C10.bam", "/shahlab/archive/single_cell_indexing/bam/A96174B/grch37/bwa-aln/numlanes_2/SA532X5XB00478-A96174B-R55-C12.bam"], "storage_name": "shahlab", "storage_type": "server", "storage_directory": "/shahlab/archive"}'
 ```
 
 where the JSON dump is
@@ -102,6 +102,7 @@ where the JSON dump is
                    ],
   "storage_name": "shahlab",
   "storage_type": "server"
+  "storage_directory": "/shahlab/archive"
 }
 ```
 
