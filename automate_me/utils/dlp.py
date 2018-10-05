@@ -80,6 +80,11 @@ def create_sequence_dataset_models(file_info, storage_name):
         # Unique set of lanes keyed by flowcell id, lane number
         unique_sequence_lanes = {}
 
+        # Add in BAM specific items
+        if infos['dataset_type'] == 'BAM':
+            sequence_dataset['aligner'] = infos['aligner_name']
+            sequence_dataset['reference_genome'] = infos['ref_genome']
+
         for info in infos:
             # Check consistency for fields used for dataset
             check_fields = (
