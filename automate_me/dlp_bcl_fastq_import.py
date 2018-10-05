@@ -68,9 +68,7 @@ def load_brc_fastqs(
 
     fastq_paired_end_check(fastq_file_info)
 
-    json_list = create_sequence_dataset_models(fastq_file_info, storage_name, tag_name, tantalus_api)
-
-    return json_list
+    create_sequence_dataset_models(fastq_file_info, storage_name, tag_name, tantalus_api)
 
 
 def _update_info(info, key, value):

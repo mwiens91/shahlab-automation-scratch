@@ -227,9 +227,7 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage, tag_name, tantalus_api
 
     fastq_paired_end_check(fastq_file_info)
 
-    json_list = create_sequence_dataset_models(fastq_file_info, storage['name'], tag_name, tantalus_api)
-
-    return json_list
+    create_sequence_dataset_models(fastq_file_info, storage['name'], tag_name, tantalus_api)
 
 
 if __name__ == '__main__':
