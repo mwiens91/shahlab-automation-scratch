@@ -12,6 +12,7 @@ from utils.tantalus import TantalusApi
 
 
 def get_bam_ref_genome(bam_header):
+    return 'HG19'# bam_header['SQ'][0]['AS']
     for pg in bam_header['PG']:
         if 'bwa' in pg['ID']:
             if 'GRCh37-lite.fa' in pg['CL']:
@@ -24,7 +25,7 @@ def get_bam_ref_genome(bam_header):
 
 def get_bam_aligner_name(bam_header):
     for pg in bam_header['PG']:
-        if 'bwa' in pg['ID']:
+        if 'bwa' in pg['ID'] or 'bwa' in pg['CL']:
             if 'sampe' in pg['CL']:
                 return 'bwa_aln'
             if 'mem' in pg['CL']:
@@ -64,14 +65,14 @@ def get_bam_header_info(header):
         sample_id = read_group['SM']
         library_id = read_group['LB']
         flowcell_lane = read_group['PU']
-        index_sequence = read_group['KS']
+        index_sequence = read_group.get('KS')
 
-        flowcell_id = flowcell_lane.split('_')[0]
+        flowcell_id = flowcell_lane
         lane_number = ''
         if '_' in flowcell_lane:
-            lane_number = flowcell_lane.split('_')[1]
+            flowcell_id, lane_number = flowcell_lane.split('_')
         elif '.' in flowcell_lane:
-            lane_number = flowcell_lane.split('.')[1]
+            flowcell_id, lane_number = flowcell_lane.split('.')
 
         sequence_lane = dict(
             flowcell_id=flowcell_id,
@@ -126,9 +127,9 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
     metadata = []
 
     if storage['storage_type'] == 'blob':
-        bam_header, file_resource = import_bam_blob(bam_filename, storage['storage_container'])
+        bam_header, file_resources = import_bam_blob(bam_filename, storage['storage_container'])
     elif storage['storage_type'] == 'server':
-        bam_header, file_resource = import_bam_server(bam_filename, storage['storage_directory'])
+        bam_header, file_resources = import_bam_server(bam_filename, storage['storage_directory'])
     else:
         raise ValueError('unsupported storage type {}'.format(storage['storage_type']))
 
@@ -145,18 +146,18 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
         lane_pk = tantalus_api.get(
             'sequencing_lane',
             flowcell_id=lane['flowcell_id'],
-            lane_number=lane['lane_number'])['id'],
-        )
+            lane_number=lane['lane_number'],
+        )['id']
         sequence_lane_pks.append(lane_pk)
 
     file_resource_pks = []
     for info in file_resources:
-        fr_pk = tantalus_api.get_or_create(
+        fr_pk = tantalus_api.get(
             'file_resource',
             size=info['size'],
             created=info['created'],
             file_type=info['file_type'],
-            compression=info['compression'],
+            compression='UNCOMPRESSED',
             filename=info['filename'],
         )['id']
         file_resource_pks.append(fr_pk)
@@ -169,6 +170,7 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
     # TODO: tags
 
     sequence_dataset = tantalus_api.get_or_create(
+        'sequence_dataset',
         name=dataset_name,
         dataset_type='BAM',
         sample=sample_pk,
@@ -215,7 +217,7 @@ def import_bam_blob(bam_filename, container_name):
     return bam_header, [bam_info, bai_info]
 
 
-def import_dlp_realign_bam_server(bam_filepath, storage_directory):
+def import_bam_server(bam_filepath, storage_directory):
     if not bam_filepath.startswith(storage_directory):
         raise ValueError('{} not in storage directory {}'.format(
             bam_filepath, storage_directory))
@@ -260,4 +262,3 @@ if __name__ == '__main__':
 
     print 'dataset {}'.format(dataset['id'])
 
-# python automate_me/query_gsc_for_dlp_fastqs.py '{"storage_name": "shahlab", "dataset_name": "BAM-DAH370N-WGS-A41086 (lanes 52f27595) testdata chromosomes 21, 22", "bam_filename": "/shahlab/archive/test_datasets/DAH370N/wgs/A41086/hg19a/DAH370N_filtered.bam"}'
