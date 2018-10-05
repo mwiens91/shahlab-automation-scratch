@@ -81,7 +81,7 @@ def create_sequence_dataset_models(file_info, storage_name):
         unique_sequence_lanes = {}
 
         # Add in BAM specific items
-        if infos['dataset_type'] == 'BAM':
+        if infos[0]['dataset_type'] == 'BAM':
             sequence_dataset['aligner'] = infos['aligner_name']
             sequence_dataset['reference_genome'] = infos['ref_genome']
 
