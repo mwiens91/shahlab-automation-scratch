@@ -23,7 +23,9 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-# Configure the azure.storage logger
+# Configure the azure.storage logger. TODO(mwiens91): is this code
+# necessary? Apparently some Microsoft people asked us to put it in, but
+# so far I've seen zero output from it, even as we were having errors.
 logger = logging.getLogger('azure.storage')
 handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
