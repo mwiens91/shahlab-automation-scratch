@@ -10,12 +10,20 @@ import subprocess
 import sys
 import time
 import traceback
-
 from azure.storage.blob import BlockBlobService, ContainerPermissions
+from utils.constants import LOGGING_FORMAT
 from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
 from utils.utils import make_dirs
 
+# Set up the root logger
+logging.basicConfig(
+    format=LOGGING_FORMAT,
+    stream=sys.stdout,
+    level=logging.INFO,
+)
+
+# Configure the azure.storage logger
 logger = logging.getLogger('azure.storage')
 handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-5s %(message)s')
@@ -69,7 +77,8 @@ class TransferProgress(object):
         percent = 'NA'
         if total > 0:
             percent = '{:.2f}'.format(100. * float(current) / total)
-        print('{}/{} ({}%) in {}s'.format(
+
+        logging.info('{}/{} ({}%) in {}s'.format(
             _as_gb(current),
             _as_gb(total),
             percent,
@@ -400,7 +409,7 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
                 storage_names.append(storage_name)
 
             if to_storage_name in storage_names:
-                print(
+                logging.info(
                     'skipping file resource {} that already exists on storage {}'.format(
                         file_resource['filename'],
                         to_storage_name))
@@ -438,18 +447,22 @@ def transfer_files(tag_name, from_storage_name, to_storage_name):
             )
 
 
-            print('starting transfer {} to {}'.format(file_resource['filename'], to_storage['name']))
-            success = False
-            for retry in range(3):
+            logging.info('starting transfer {} to {}'.format(file_resource['filename'], to_storage['name']))
+
+            RETRIES = 3
+
+            for retry in range(RETRIES):
                 try:
                     f_transfer(from_file_instance, to_storage, tantalus_api)
-                    success = True
                     break
-                except:
-                    print('transfer failed')
-                    traceback.print_exc()
-            if not success:
-                raise Exception('failed all retry attempts')
+                except Exception as e:
+                    logging.error('Transfer failed. Retrying.')
+
+                    if retry < RETRIES - 1:
+                        traceback.print_exc()
+                    else:
+                        logging.error('Failed all retry attempts')
+                        raise e
 
             tantalus_api.get_or_create(
                 'file_instance',
