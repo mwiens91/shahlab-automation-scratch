@@ -4,7 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import requests
-from basicclient import BasicAPIClient
+from utils.basicclient import BasicAPIClient
 
 
 COLOSSUS_API_URL = os.environ.get('COLOSSUS_API_URL', 'http://colossus.bcgsc.ca/api/')
