@@ -3,16 +3,24 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import logging
 import os
 import re
 import sys
 import time
 import pandas as pd
 from utils.colossus import get_colossus_sublibraries_from_library_id
+from utils.constants import LOGGING_FORMAT
 from utils.dlp import create_sequence_dataset_models, fastq_paired_end_check
 from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
 
+# Set up the root logger
+logging.basicConfig(
+    format=LOGGING_FORMAT,
+    stream=sys.stdout,
+    level=logging.INFO,
+)
 
 # Hard coded BRC details
 BRC_INSTRUMENT = "NextSeq550"

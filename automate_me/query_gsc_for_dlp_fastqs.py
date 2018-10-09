@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import logging
 import os
 import string
 import sys
@@ -10,13 +11,21 @@ import time
 import pandas as pd
 from utils.colossus import (
     get_colossus_sublibraries_from_library_id,
-    query_libraries_by_library_id,)
+    query_libraries_by_library_id,
+)
+from utils.constants import LOGGING_FORMAT
 from utils.dlp import create_sequence_dataset_models, fastq_paired_end_check
 from utils.filecopy import rsync_file
 from utils.gsc import get_sequencing_instrument, GSCAPI
 from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
 
+# Set up the root logger
+logging.basicConfig(
+    format=LOGGING_FORMAT,
+    stream=sys.stdout,
+    level=logging.INFO,
+)
 
 solexa_run_type_map = {
     'Paired': 'P'}
@@ -148,7 +157,7 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
         primer_info = gsc_api.query('primer/{}'.format(primer_id))
         raw_index_sequence = primer_info['adapter_index_sequence']
 
-        print('loading fastq', fastq_info['id'], 'index', raw_index_sequence, fastq_path)
+        logging.info('loading fastq %s, index %s, %s', fastq_info['id'], raw_index_sequence, fastq_path)
 
         flowcell_lane = flowcell_id
         if lane_number is not None:

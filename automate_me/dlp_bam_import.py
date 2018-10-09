@@ -4,15 +4,24 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import datetime
+import logging
 import os
 import sys
 import time
 import azure.storage.blob
 import pandas as pd
 import pysam
+from utils.constants import LOGGING_FORMAT
 from utils.dlp import create_sequence_dataset_models
 from utils.runtime_args import parse_runtime_args
 from utils.tantalus import TantalusApi
+
+# Set up the root logger
+logging.basicConfig(
+    format=LOGGING_FORMAT,
+    stream=sys.stdout,
+    level=logging.INFO,
+)
 
 
 def get_bam_ref_genome(bam_header):
