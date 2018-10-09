@@ -16,7 +16,7 @@ import requests
 import coreapi
 from openapi_codec import OpenAPICodec
 from coreapi.codecs import JSONCodec
-from basicclient import BasicAPIClient
+from utils.basicclient import BasicAPIClient
 
 
 TANTALUS_API_URL = 'http://tantalus.bcgsc.ca/api/'
