@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 from datetime import datetime
 import os
 import sys
@@ -249,18 +251,18 @@ def import_gsc_library(libraries, storage, skip_file_import=False, skip_older_th
     for library_name in libraries:
         library_infos = gsc_api.query('library?name={}'.format(library_name))
 
-        print 'importing', library_name
+        print('importing', library_name)
 
         for library_info in library_infos:
             protocol_info = gsc_api.query('protocol/{}'.format(library_info['protocol_id']))
 
             if library_info['protocol_id'] not in protocol_id_map:
-                print 'warning, protocol {}:{} not supported'.format(library_info['protocol_id'], protocol_info['extended_name'])
+                print('warning, protocol {}:{} not supported'.format(library_info['protocol_id'], protocol_info['extended_name']))
                 continue
 
             library_type = protocol_id_map[library_info['protocol_id']]
 
-            print 'found', library_type
+            print('found', library_type)
 
             sample_id = library_info['external_identifier']
 
@@ -288,15 +290,15 @@ def import_gsc_library(libraries, storage, skip_file_import=False, skip_older_th
                 num_lanes = len(merge_info['merge_xrefs'])
 
                 if merge_info['complete'] is None:
-                    print 'skipping merge with no completed date'
+                    print('skipping merge with no completed date')
                     continue
 
                 completed_date = convert_time(merge_info['complete'])
 
-                print 'merge completed', completed_date
+                print('merge completed', completed_date)
 
                 if skip_older_than is not None and completed_date < skip_older_than:
-                    print 'skipping old merge'
+                    print('skipping old merge')
                     continue
 
                 lane_infos = []
@@ -364,15 +366,15 @@ def import_gsc_library(libraries, storage, skip_file_import=False, skip_older_th
             for libcore in libcores:
                 created_date = convert_time(libcore['created'])
 
-                print 'libcore {} created {}'.format(libcore['id'], created_date)
+                print('libcore {} created {}'.format(libcore['id'], created_date))
 
                 if skip_older_than is not None and created_date < skip_older_than:
-                    print 'skipping old lane'
+                    print('skipping old lane')
                     continue
 
                 lims_run_validation = libcore['libcore']['run']['lims_run_validation']
                 if lims_run_validation == 'Rejected':
-                    print 'skipping rejected lane'
+                    print('skipping rejected lane')
                     continue
 
                 flowcell_id = libcore['libcore']['run']['flowcell_id']
@@ -385,7 +387,9 @@ def import_gsc_library(libraries, storage, skip_file_import=False, skip_older_th
                 data_path = libcore['data_path']
 
                 if not skip_file_import and data_path is None:
-                    print Exception('data path is None')
+                    # TODO(mwiens91): Change this maybe? This is very
+                    # ...  non-standard.
+                    print(Exception('data path is None'))
 
                 flowcell_info = gsc_api.query('flowcell/{}'.format(flowcell_id))
                 flowcell_id = flowcell_info['lims_flowcell_code']

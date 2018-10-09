@@ -1,5 +1,7 @@
 """Contains a method to get runtime arguments for tasks."""
 
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 import __main__
 import argparse

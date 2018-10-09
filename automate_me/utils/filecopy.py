@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import os
 import sys
 import subprocess
-
 from utils import make_dirs
 
 
@@ -19,7 +21,7 @@ def rsync_file(from_path, to_path):
         to_path,
     ]
 
-    print ' '.join(subprocess_cmd)
+    print(' '.join(subprocess_cmd))
 
     sys.stdout.flush()
     sys.stderr.flush()

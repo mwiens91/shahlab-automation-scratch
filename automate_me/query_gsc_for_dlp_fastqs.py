@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import os
 import string
 import sys
@@ -145,7 +148,7 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
         primer_info = gsc_api.query('primer/{}'.format(primer_id))
         raw_index_sequence = primer_info['adapter_index_sequence']
 
-        print 'loading fastq', fastq_info['id'], 'index', raw_index_sequence, fastq_path
+        print('loading fastq', fastq_info['id'], 'index', raw_index_sequence, fastq_path)
 
         flowcell_lane = flowcell_id
         if lane_number is not None:
