@@ -15,6 +15,8 @@ from utils.tantalus import TantalusApi
 
 
 def get_bam_ref_genome(bam_header):
+    # TODO(mwiens91): come up with a heuristic for determining this from
+    # bam headers
     return 'HG19'# bam_header['SQ'][0]['AS']
     for pg in bam_header['PG']:
         if 'bwa' in pg['ID']:
