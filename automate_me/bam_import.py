@@ -126,7 +126,14 @@ def get_created_time_blob(blob_service, container, blobname):
     return created_time
 
 
-def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=None):
+def import_bam(
+        tantalus_api,
+        storage_name,
+        dataset_name,
+        bam_filename,
+        read_type,
+        sequencing_centre,
+        tag_name=None):
     storage = tantalus_api.get('storage', name=storage_name)
 
     metadata = []
@@ -154,15 +161,19 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
         tags = []
 
     sequence_lane_pks = []
+
     for lane in bam_header_info['sequence_lanes']:
-        lane_pk = tantalus_api.get(
+        lane_pk = tantalus_api.get_or_create(
             'sequencing_lane',
             flowcell_id=lane['flowcell_id'],
-            lane_number=lane['lane_number'],
+            dna_library=library_pk,
+            read_type=read_type,
+            sequencing_centre=sequencing_centre,
         )['id']
         sequence_lane_pks.append(lane_pk)
 
     file_resource_pks = []
+
     for info in file_resources:
         fr_pk = tantalus_api.get(
             'file_resource',
@@ -172,7 +183,9 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
             compression='UNCOMPRESSED',
             filename=info['filename'],
         )['id']
+
         file_resource_pks.append(fr_pk)
+
         tantalus_api.get_or_create(
             'file_instance',
             storage=storage['id'],
@@ -198,9 +211,11 @@ def import_bam(tantalus_api, storage_name, dataset_name, bam_filename, tag_name=
 def import_bam_blob(bam_filename, container_name):
     # Assumption: bam filename is prefixed by container name
     bam_filename = bam_filename.strip('/')
+
     if not bam_filename.startswith(container_name + '/'):
         raise Exception('expected container name {} as prefix for bam filename {}'.format(
             container_name, bam_filename))
+
     bam_filename = bam_filename[len(container_name + '/'):]
 
     bai_filename = bam_filename + '.bai'
@@ -268,6 +283,8 @@ if __name__ == '__main__':
         args['storage_name'],
         args['dataset_name'],
         args['bam_filename'],
+        args['read_type'],
+        args['sequencing_centre'],
         tag_name=args.get('tag_name'),
     )
 
