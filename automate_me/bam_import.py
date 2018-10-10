@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import datetime
 import os
 import sys
@@ -266,5 +269,4 @@ if __name__ == '__main__':
         tag_name=args.get('tag_name'),
     )
 
-    print 'dataset {}'.format(dataset['id'])
-
+    print('dataset {}'.format(dataset['id']))
