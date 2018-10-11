@@ -140,21 +140,21 @@ def import_gsc_dlp_paired_fastqs(colossus_api, dlp_library_id, storage, existing
         fastq_path = fastq_info['data_path']
 
         if fastq_info['status'] != 'production':
-            print 'skipping file {} marked as {}'.format(
-                fastq_info['data_path'], fastq_info['status'])
+            logging.info('skipping file {} marked as {}'.format(
+                fastq_info['data_path'], fastq_info['status']))
             continue
 
         flowcell_id = fastq_info['libcore']['run']['flowcell']['lims_flowcell_code']
         lane_number = fastq_info['libcore']['run']['lane_number']
 
         if (flowcell_id, str(lane_number)) in existing_lanes:
-            print 'skipping file {} with existing lane {}_{}'.format(
-                fastq_path, flowcell_id, lane_number)
+            logging.info('skipping file {} with existing lane {}_{}'.format(
+                fastq_path, flowcell_id, lane_number))
             continue
 
         if fastq_info['removed_datetime'] is not None:
-            print 'skipping file {} marked as removed {}'.format(
-                fastq_info['data_path'], fastq_info['removed_datetime'])
+            logging.info('skipping file {} marked as removed {}'.format(
+                fastq_info['data_path'], fastq_info['removed_datetime']))
             continue
 
         sequencing_instrument = get_sequencing_instrument(fastq_info['libcore']['run']['machine'])
@@ -258,8 +258,8 @@ if __name__ == '__main__':
 
     # Query tantalus for existing lanes
     existing_lanes = set()
-#    for lane in tantalus_api.list('sequencing_lane', dna_library__library_id=args['dlp_library_id']):
-#        existing_lanes.add((lane['flowcell_id'], lane['lane_number']))
+    for lane in tantalus_api.list('sequencing_lane', dna_library__library_id=args['dlp_library_id']):
+        existing_lanes.add((lane['flowcell_id'], lane['lane_number']))
 
     # Query GSC for FastQs
     json_to_post = import_gsc_dlp_paired_fastqs(
@@ -270,7 +270,7 @@ if __name__ == '__main__':
 
     # Check if we skipped all files
     if len(json_to_post) == 0:
-        print 'no data to import'
+        logging.error('no data to import')
         sys.exit()
 
     # Get the tag name if it was passed in
@@ -284,5 +284,4 @@ if __name__ == '__main__':
         model_dictionaries=json_to_post,
         tag_name=tag_name)
 
-    print 'import succeeded'
-
+    logging.info('import succeeded')
