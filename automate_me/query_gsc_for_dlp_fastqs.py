@@ -9,15 +9,12 @@ import string
 import sys
 import time
 import pandas as pd
-from utils.colossus import (
-    get_colossus_sublibraries_from_library_id,
-    query_libraries_by_library_id,
-)
 from utils.constants import LOGGING_FORMAT
 from utils.dlp import create_sequence_dataset_models, fastq_paired_end_check
 from utils.filecopy import rsync_file
 from utils.gsc import get_sequencing_instrument, GSCAPI
 from utils.runtime_args import parse_runtime_args
+from utils.colossus import ColossusApi
 from utils.tantalus import TantalusApi
 
 # Set up the root logger
@@ -68,9 +65,9 @@ def decode_raw_index_sequence(raw_index_sequence, instrument, rev_comp_override)
     return i7 + '-' + i5
 
 
-def query_colossus_dlp_cell_info(library_id):
+def query_colossus_dlp_cell_info(colossus_api, library_id):
 
-    sublibraries = get_colossus_sublibraries_from_library_id(library_id)
+    sublibraries = colossus_api.get_colossus_sublibraries_from_library_id(library_id)
 
     cell_samples = {}
     for sublib in sublibraries:
@@ -80,8 +77,8 @@ def query_colossus_dlp_cell_info(library_id):
     return cell_samples
 
 
-def query_colossus_dlp_rev_comp_override(library_id):
-    library_info = query_libraries_by_library_id(library_id)
+def query_colossus_dlp_rev_comp_override(colossus_api, library_id):
+    library_info = colossus_api.query_libraries_by_library_id(library_id)
 
     rev_comp_override = {}
     for sequencing in library_info['dlpsequencing_set']:
@@ -112,13 +109,13 @@ dlp_fastq_template = os.path.join(
     '{primary_sample_id}',
     '{dlp_library_id}',
     '{flowcell_id}_{lane_number}',
-    '{cell_sample_id}_{dlp_library_id}_{index_sequence}_{read_end}.fastq')
+    '{cell_sample_id}_{dlp_library_id}_{index_sequence}_{read_end}.fastq{extension}')
 
 
-def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
-    primary_sample_id = query_libraries_by_library_id(dlp_library_id)['sample']['sample_id']
-    cell_samples = query_colossus_dlp_cell_info(dlp_library_id)
-    rev_comp_overrides = query_colossus_dlp_rev_comp_override(dlp_library_id)
+def import_gsc_dlp_paired_fastqs(colossus_api, dlp_library_id, storage, existing_lanes):
+    primary_sample_id = colossus_api.query_libraries_by_library_id(dlp_library_id)['sample']['sample_id']
+    cell_samples = query_colossus_dlp_cell_info(colossus_api, dlp_library_id)
+    rev_comp_overrides = query_colossus_dlp_rev_comp_override(colossus_api, dlp_library_id)
 
     external_identifier = '{}_{}'.format(primary_sample_id, dlp_library_id)
 
@@ -140,15 +137,26 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
     fastq_file_info = []
 
     for fastq_info in fastq_infos:
+        fastq_path = fastq_info['data_path']
+
         if fastq_info['status'] != 'production':
+            print 'skipping file {} marked as {}'.format(
+                fastq_info['data_path'], fastq_info['status'])
+            continue
+
+        flowcell_id = fastq_info['libcore']['run']['flowcell']['lims_flowcell_code']
+        lane_number = fastq_info['libcore']['run']['lane_number']
+
+        if (flowcell_id, str(lane_number)) in existing_lanes:
+            print 'skipping file {} with existing lane {}_{}'.format(
+                fastq_path, flowcell_id, lane_number)
             continue
 
         if fastq_info['removed_datetime'] is not None:
+            print 'skipping file {} marked as removed {}'.format(
+                fastq_info['data_path'], fastq_info['removed_datetime'])
             continue
 
-        fastq_path = fastq_info['data_path']
-        flowcell_id = fastq_info['libcore']['run']['flowcell']['lims_flowcell_code']
-        lane_number = fastq_info['libcore']['run']['lane_number']
         sequencing_instrument = get_sequencing_instrument(fastq_info['libcore']['run']['machine'])
         solexa_run_type = fastq_info['libcore']['run']['solexarun_type']
         read_type = solexa_run_type_map[solexa_run_type]
@@ -182,6 +190,14 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
             raise Exception('unable to find index {} for flowcell lane {} for library {}'.format(
                 index_sequence, flowcell_lane, dlp_library_id))
 
+        extension = ''
+        compression = 'UNCOMPRESSED'
+        if fastq_path.endswith('.gz'):
+            extension = '.gz'
+            compression = 'GZIP'
+        elif not fastq_path.endswith('.fastq'):
+            raise ValueError('unknown extension for filename {}'.format(fastq_path))
+
         tantalus_filename = dlp_fastq_template.format(
             primary_sample_id=primary_sample_id,
             dlp_library_id=dlp_library_id,
@@ -190,15 +206,13 @@ def import_gsc_dlp_paired_fastqs(dlp_library_id, storage):
             cell_sample_id=cell_sample_id,
             index_sequence=index_sequence,
             read_end=read_end,
+            extension=extension,
         )
 
         tantalus_path = os.path.join(
             storage['storage_directory'],
             tantalus_filename,
         )
-
-        if fastq_path.endswith('.gz'):
-            tantalus_path += '.gz'
 
         rsync_file(fastq_path, tantalus_path)
 
@@ -237,15 +251,27 @@ if __name__ == '__main__':
     args = parse_runtime_args()
 
     # Connect to the Tantalus API (this requires appropriate environment
-    # variables defined)
+    colossus_api = ColossusApi()
     tantalus_api = TantalusApi()
 
     storage = tantalus_api.get('storage_server', name=args['storage_name'])
 
+    # Query tantalus for existing lanes
+    existing_lanes = set()
+#    for lane in tantalus_api.list('sequencing_lane', dna_library__library_id=args['dlp_library_id']):
+#        existing_lanes.add((lane['flowcell_id'], lane['lane_number']))
+
     # Query GSC for FastQs
     json_to_post = import_gsc_dlp_paired_fastqs(
+        colossus_api,
         args['dlp_library_id'],
-        storage)
+        storage,
+        existing_lanes)
+
+    # Check if we skipped all files
+    if len(json_to_post) == 0:
+        print 'no data to import'
+        sys.exit()
 
     # Get the tag name if it was passed in
     try:
@@ -257,3 +283,6 @@ if __name__ == '__main__':
     tantalus_api.sequence_dataset_add(
         model_dictionaries=json_to_post,
         tag_name=tag_name)
+
+    print 'import succeeded'
+
