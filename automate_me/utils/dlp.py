@@ -77,6 +77,9 @@ def create_sequence_dataset_models(file_info, storage_name):
             model='SequenceDataset',
         )
 
+        # Unique set of lanes keyed by flowcell id, lane number
+        unique_sequence_lanes = {}
+
         for info in infos:
             # Check consistency for fields used for dataset
             check_fields = (
@@ -93,7 +96,7 @@ def create_sequence_dataset_models(file_info, storage_name):
             for sequence_lane in info['sequence_lanes']:
                 sequence_lane = dict(sequence_lane)
                 sequence_lane['dna_library'] = library
-                sequence_dataset['sequence_lanes'].append(sequence_lane)
+                unique_sequence_lanes[(sequence_lane['flowcell_id'], sequence_lane['lane_number'])] = sequence_lane
 
             sequence_file_info = dict(
                 index_sequence=info['index_sequence'],
@@ -123,6 +126,9 @@ def create_sequence_dataset_models(file_info, storage_name):
                 file_instance['filename_override'] = info['filename_override']
 
             json_list.append(file_instance)
+
+        for sequence_lane in unique_sequence_lanes.values():
+            sequence_dataset['sequence_lanes'].append(sequence_lane)
 
         json_list.append(sequence_dataset)
 
