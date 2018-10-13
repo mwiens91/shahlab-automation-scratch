@@ -3,9 +3,9 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import __main__
 import argparse
 import json
+import __main__
 
 
 def parse_runtime_args(name=__main__.__file__):

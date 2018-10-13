@@ -4,13 +4,11 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import os
-import requests
 import coreapi
-from openapi_codec import OpenAPICodec
 from coreapi.codecs import JSONCodec
 from django.core.serializers.json import DjangoJSONEncoder
-import json
+from openapi_codec import OpenAPICodec
+import requests
 
 
 class NotFoundError(Exception):
@@ -162,4 +160,3 @@ class BasicAPIClient(object):
         print(fields)
 
         return self.coreapi_client.action(self.coreapi_schema, [table_name, 'create'], params=fields)
-

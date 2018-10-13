@@ -10,12 +10,7 @@ from __future__ import division
 from __future__ import print_function
 import json
 import os
-import sys
 from django.core.serializers.json import DjangoJSONEncoder
-import requests
-import coreapi
-from openapi_codec import OpenAPICodec
-from coreapi.codecs import JSONCodec
 from utils.basicclient import BasicAPIClient
 
 

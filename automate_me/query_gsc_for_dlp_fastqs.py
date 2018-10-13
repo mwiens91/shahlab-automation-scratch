@@ -123,7 +123,7 @@ def import_gsc_dlp_paired_fastqs(colossus_api, dlp_library_id, storage, existing
 
     library_infos = gsc_api.query('library?external_identifier={}'.format(external_identifier))
 
-    if len(library_infos) == 0:
+    if (library_infos) == 0:
         raise Exception('no libraries with external_identifier {} in gsc api'.format(external_identifier))
     elif len(library_infos) > 1:
         raise Exception('multiple libraries with external_identifier {} in gsc api'.format(external_identifier))
@@ -235,7 +235,7 @@ def import_gsc_dlp_paired_fastqs(colossus_api, dlp_library_id, storage, existing
             file_type='FQ',
             read_end=read_end,
             index_sequence=index_sequence,
-            compression='GZIP',
+            compression=compression,
             filename=tantalus_filename,
         ))
 
@@ -269,7 +269,7 @@ if __name__ == '__main__':
         existing_lanes)
 
     # Check if we skipped all files
-    if len(json_to_post) == 0:
+    if not json_to_post:
         logging.error('no data to import')
         sys.exit()
 
