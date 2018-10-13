@@ -41,7 +41,7 @@ dump. Here's a few examples for how you might run them:
 ### [query_gsc_for_wgs_bams](automate_me/query_gsc_for_wgs_bams.py)
 
 ```
-python automate_me/query_gsc_for_wgs_bams.py '{"tag_name": "gsc_wgs_bam_test2", "library_ids": ["A06679"], "skip_file_import": false, "skip_older_than": "2018-06-01"}'
+python automate_me/query_gsc_for_wgs_bams.py '{"tag_name": "gsc_wgs_bam_test2", "libraries": ["A06679"], "skip_file_import": false, "skip_older_than": "2018-06-01", "storage_name": "shahlab"}'
 ```
 
 where the JSON dump is
@@ -49,16 +49,17 @@ where the JSON dump is
 ```json
 {
   "tag_name": "gsc_wgs_bam_test",
-  "library_ids": ["A06679"],
+  "libraries": ["A06679"],
   "skip_file_import": false,
-  "skip_older_than": "2018-06-01"
+  "skip_older_than": "2018-06-01",
+  "storage_name": "shahlab"
 }
 ```
 
 ### [query_gsc_for_dlp_fastqs](automate_me/query_gsc_for_dlp_fastqs.py)
 
 ```
-python automate_me/query_gsc_for_dlp_fastqs.py '{"dlp_library_id": "A96225C", "gsc_library_id": "PX0884"}'
+python automate_me/query_gsc_for_dlp_fastqs.py '{"dlp_library_id": "A96225C", "gsc_library_id": "PX0884", "storage_name": "shahlab"}'
 ```
 
 where the JSON dump is
@@ -66,7 +67,8 @@ where the JSON dump is
 ```json
 {
   "dlp_library_id": "A96225C",
-  "gsc_library_id": "PX0884"
+  "gsc_library_id": "PX0884",
+  "storage_name": "shahlab"
 }
 ```
 
