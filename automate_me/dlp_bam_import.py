@@ -148,17 +148,25 @@ def import_dlp_realign_bams(storage_name, storage_type, bam_filenames, **kwargs)
 
 
 def import_dlp_realign_bam_blob(bam_filename, container_name):
-    # Assumption: bam filename is prefixed by container name
+    storage_account = os.environ['AZURE_STORAGE_ACCOUNT']
+
+    # Assumption: bam filename is prefixed by either
+    # storage_account/container/, container/, or is not prefixed
+
     bam_filename = bam_filename.strip('/')
-    if not bam_filename.startswith(container_name + '/'):
-        raise Exception('expected container name {} as prefix for bam filename {}'.format(
-            container_name, bam_filename))
-    bam_filename = bam_filename[len(container_name + '/'):]
+
+    container_prefix = container_name + '/'
+    storage_account_prefix = storage_account + '/' + container_prefix
+
+    if bam_filename.startswith(storage_account_prefix):
+        bam_filename = bam_filename[len(storage_account_prefix):]
+    elif bam_filename.startswith(container_prefix):
+        bam_filename = bam_filename[len(container_prefix):]
 
     bai_filename = bam_filename + '.bai'
 
     blob_service = azure.storage.blob.BlockBlobService(
-        account_name=os.environ['AZURE_STORAGE_ACCOUNT'],
+        account_name=storage_account,
         account_key=os.environ['AZURE_STORAGE_KEY'])
 
     bam_header = get_bam_header_blob(blob_service, container_name, bam_filename)
