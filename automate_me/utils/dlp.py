@@ -83,7 +83,15 @@ def create_sequence_dataset_models(file_info, storage_name):
         # Add in BAM specific items
         if infos[0]['dataset_type'] == 'BAM':
             sequence_dataset['aligner'] = infos[0]['aligner_name']
-            sequence_dataset['reference_genome'] = infos[0]['ref_genome']
+            ref_genome = infos[0]['ref_genome']
+
+            # Stick with one naming scheme
+            if ref_genome.lower() == 'grch36':
+                ref_genome = 'HG18'
+            elif ref_genome.lower() == 'grch37':
+                ref_genome = 'HG19'
+
+            sequence_dataset['reference_genome'] = ref_genome
 
         for info in infos:
             # Check consistency for fields used for dataset
