@@ -243,25 +243,22 @@ if __name__ == '__main__':
     # variables defined)
     tantalus_api = TantalusApi()
 
-    # Don't care about storage_directory if the storage type isn't
-    # blob
-    try:
-        storage_directory = args['storage_directory']
-    except KeyError as e:
-        if args['storage_type'] != 'server':
-            storage_directory = None
-        else:
-            raise e
+    # Get storage type specific variables
+    storage_type = args['storage_type']
 
-    # Don't care about blob_container_names if the storage type isn't
-    # blob
-    try:
+    if storage_type == 'server':
+        storage_directory = args['storage_directory']
+        blob_container_name = None
+
+        assert storage_directory is not None
+    elif storage_type == 'blob':
         blob_container_name = args['blob_container_name']
-    except KeyError as e:
-        if args['storage_type'] != 'blob':
-            blob_container_name = None
-        else:
-            raise e
+        storage_directory = None
+
+        assert blob_container_name is not None
+    else:
+        raise RuntimeError(
+            "%s is not a recognized storage type" % storage_type)
 
     # Import DLP BAMs
     json_to_post = import_dlp_realign_bams(
