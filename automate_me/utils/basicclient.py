@@ -17,6 +17,7 @@ class NotFoundError(Exception):
 
 class BasicAPIClient(object):
     """ Basic API class. """
+
     # Parameters used for pagination. Change this in subclasses.
     pagination_param_names = ()
 
@@ -30,38 +31,39 @@ class BasicAPIClient(object):
             self.session.auth = (username, password)
 
         # Tell Tantalus we're sending JSON
-        self.session.headers.update({'content-type': 'application/json'})
+        self.session.headers.update({"content-type": "application/json"})
 
         # Record the base API URL
         self.base_api_url = api_url
 
-        self.document_url = self.base_api_url + 'swagger/?format=openapi'
+        self.document_url = self.base_api_url + "swagger/?format=openapi"
 
         auth = None
         if username is not None and password is not None:
             auth = coreapi.auth.BasicAuthentication(
-                username=username, password=password)
+                username=username, password=password
+            )
 
         decoders = [OpenAPICodec(), JSONCodec()]
 
         self.coreapi_client = coreapi.Client(auth=auth, decoders=decoders)
-        self.coreapi_schema = self.coreapi_client.get(self.document_url, format='openapi')
+        self.coreapi_schema = self.coreapi_client.get(
+            self.document_url, format="openapi"
+        )
 
     def get(self, table_name, **fields):
-        ''' Check if a resource exists and if so return it. '''
+        """ Check if a resource exists and if so return it. """
 
         list_results = self.list(table_name, **fields)
 
         try:
             result = next(list_results)
         except StopIteration:
-            raise NotFoundError('no object for {}, {}'.format(
-                table_name, fields))
+            raise NotFoundError("no object for {}, {}".format(table_name, fields))
 
         try:
             next(list_results)
-            raise Exception('more than 1 object for {}, {}'.format(
-                table_name, fields))
+            raise Exception("more than 1 object for {}, {}".format(table_name, fields))
         except StopIteration:
             pass
 
@@ -90,11 +92,11 @@ class BasicAPIClient(object):
         pass
 
     def list(self, table_name, **fields):
-        ''' List resources in from endpoint with given filter fields. '''
+        """ List resources in from endpoint with given filter fields. """
 
         get_params = {}
 
-        for field in self.coreapi_schema[table_name]['list'].fields:
+        for field in self.coreapi_schema[table_name]["list"].fields:
             if field.name in self.pagination_param_names:
                 continue
             if field.name in fields:
@@ -104,20 +106,23 @@ class BasicAPIClient(object):
         self.get_list_pagination_initial_params(get_params)
 
         while True:
-            list_results = self.coreapi_client.action(self.coreapi_schema, [table_name, 'list'], params=get_params)
+            list_results = self.coreapi_client.action(
+                self.coreapi_schema, [table_name, "list"], params=get_params
+            )
 
-            for result in list_results['results']:
+            for result in list_results["results"]:
                 for field_name, field_value in fields.iteritems():
                     # Currently no support for checking related model fields
-                    if '__' in field_name:
+                    if "__" in field_name:
                         continue
 
                     if field_name not in result:
-                        raise Exception('field {} not in {}'.format(
-                            field_name, table_name))
+                        raise Exception(
+                            "field {} not in {}".format(field_name, table_name)
+                        )
 
                     try:
-                        result_field = result[field_name]['id']
+                        result_field = result[field_name]["id"]
                     except TypeError:
                         result_field = result[field_name]
 
@@ -128,27 +133,30 @@ class BasicAPIClient(object):
                     # TODO(mwiens91): find a more elegant way of
                     # achieving this effect
                     exclude_fields = (
-                        'created',  # datetimes have different formats
-                        'sequence_lanes',   # in list is nested, but not in create
-                        'file_resources',   # *->many are issues
-                        'tags',   # *->many are issues
+                        "created",  # datetimes have different formats
+                        "sequence_lanes",  # in list is nested, but not in create
+                        "file_resources",  # *->many are issues
+                        "tags",  # *->many are issues
                     )
 
                     if result_field != field_value and field_name not in exclude_fields:
-                        raise Exception('field {} mismatches, set to {} not {}'.format(
-                            field_name, result_field, field_value))
+                        raise Exception(
+                            "field {} mismatches, set to {} not {}".format(
+                                field_name, result_field, field_value
+                            )
+                        )
 
                 yield result
 
-            if list_results.get('next') is None:
+            if list_results.get("next") is None:
                 break
 
             # Set up for the next page
             self.get_list_pagination_next_page_params(get_params)
 
     def get_or_create(self, table_name, **fields):
-        ''' Check if a resource exists in and if so return it.
-        If it does not exist, create the resource and return it. '''
+        """ Check if a resource exists in and if so return it.
+        If it does not exist, create the resource and return it. """
 
         try:
             return self.get(table_name, **fields)
@@ -159,4 +167,6 @@ class BasicAPIClient(object):
             fields[field_name] = eval(DjangoJSONEncoder().encode(field_value))
         print(fields)
 
-        return self.coreapi_client.action(self.coreapi_schema, [table_name, 'create'], params=fields)
+        return self.coreapi_client.action(
+            self.coreapi_schema, [table_name, "create"], params=fields
+        )

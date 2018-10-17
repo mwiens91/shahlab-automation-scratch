@@ -23,18 +23,12 @@ def parse_runtime_args(name=__main__.__file__):
         RuntimeError: The arguments passed in were absent or ambiguous.
     """
     # Parse args
-    parser = argparse.ArgumentParser(
-        prog=name,
-        description="%(prog)s",
+    parser = argparse.ArgumentParser(prog=name, description="%(prog)s")
+    parser.add_argument(
+        "json", default="{}", nargs="?", help="arguments for the script in JSON format"
     )
     parser.add_argument(
-        'json',
-        default="{}",
-        nargs="?",
-        help="arguments for the script in JSON format",
-    )
-    parser.add_argument(
-        '--json-file',
+        "--json-file",
         default=None,
         help="JSON file containing arguments for the script",
     )
