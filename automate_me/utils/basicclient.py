@@ -165,7 +165,6 @@ class BasicAPIClient(object):
 
         for field_name, field_value in fields.iteritems():
             fields[field_name] = eval(DjangoJSONEncoder().encode(field_value))
-        print(fields)
 
         return self.coreapi_client.action(
             self.coreapi_schema, [table_name, "create"], params=fields
