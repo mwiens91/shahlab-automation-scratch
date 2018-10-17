@@ -58,7 +58,10 @@ def load_brc_fastqs(
 
     # Check that output_dir is actually in storage
     if not output_dir.startswith(storage_directory):
-        raise Exception("Invalid path for output_dir. {} doesn't seem to be in the specified storage".format(output_dir))
+        raise Exception(
+            "Invalid path for output_dir. {} doesn't seem to be in the specified storage".format(
+                output_dir)
+        )
 
     # Check that path is valid.
     if not os.path.isdir(output_dir):
@@ -101,7 +104,10 @@ def get_fastq_info(output_dir, flowcell_id, storage_directory):
     fastq_file_info = []
 
     for filename in filenames:
-        match = re.match("^([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-R(\\d+)-C(\\d+)_S(\\d+)(_L(\\d+))?_R([12])_001.fastq.gz$", filename)
+        match = re.match(
+            "^([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-R(\\d+)-C(\\d+)_S(\\d+)(_L(\\d+))?_R([12])_001.fastq.gz$",
+            filename
+        )
 
         if match is None:
             raise Exception('unrecognized fastq filename structure for {}'.format(filename))

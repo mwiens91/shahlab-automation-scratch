@@ -58,13 +58,15 @@ def create_sequence_dataset_models(file_info, storage_name, tag_name, tantalus_a
     for dataset_name, infos in dataset_info.iteritems():
         # Get library PK
         library_id = infos[0]['library_id']
-        library_pk = tantalus_api.get('dna_library',
+        library_pk = tantalus_api.get(
+            'dna_library',
             library_id=library_id,
         )['id']
 
         # Get sample PK
         sample_id = infos[0]['sample_id']
-        sample_pk = tantalus_api.get('sample',
+        sample_pk = tantalus_api.get(
+            'sample',
             sample_id=sample_id,
         )['id']
 
@@ -80,6 +82,8 @@ def create_sequence_dataset_models(file_info, storage_name, tag_name, tantalus_a
         )
 
         # Unique set of lanes keyed by flowcell id, lane number
+        # TODO(mwiens91): What's this for? It's not used anywhere
+        # :thinking:
         unique_sequence_lanes = {}
 
         # Add in BAM specific items

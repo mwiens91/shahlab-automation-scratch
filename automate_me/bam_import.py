@@ -5,7 +5,6 @@ from __future__ import division
 from __future__ import print_function
 import datetime
 import os
-import sys
 import time
 import azure.storage.blob
 import pandas as pd
@@ -18,6 +17,8 @@ def get_bam_ref_genome(bam_header):
     # TODO(mwiens91): come up with a heuristic for determining this from
     # bam headers
     return 'HG19'# bam_header['SQ'][0]['AS']
+
+    # TODO(mwiens91): ummm. what's this code doing here...
     for pg in bam_header['PG']:
         if 'bwa' in pg['ID']:
             if 'GRCh37-lite.fa' in pg['CL']:
@@ -59,6 +60,7 @@ def get_bam_header_blob(blob_service, container_name, blob_name):
 
 
 def get_bam_header_info(header):
+    # TODO(mwiens91): What's this for? It isn't being used anywhere.
     index_info = {}
 
     sample_ids = set()
@@ -136,6 +138,7 @@ def import_bam(
         tag_name=None):
     storage = tantalus_api.get('storage', name=storage_name)
 
+    # TODO(mwiens91): What's this for? It isn't being used anywhere.
     metadata = []
 
     if storage['storage_type'] == 'blob':

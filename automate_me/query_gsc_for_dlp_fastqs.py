@@ -83,7 +83,9 @@ def query_colossus_dlp_rev_comp_override(colossus_api, library_id):
     rev_comp_override = {}
     for sequencing in library_info['dlpsequencing_set']:
         for lane in sequencing['dlplane_set']:
-            rev_comp_override[lane['flow_cell_id']] = sequencing['dlpsequencingdetail']['rev_comp_override']
+            rev_comp_override[lane['flow_cell_id']] = (
+                sequencing['dlpsequencingdetail']['rev_comp_override']
+            )
 
     return rev_comp_override
 
@@ -109,13 +111,24 @@ dlp_fastq_template = os.path.join(
     '{primary_sample_id}',
     '{dlp_library_id}',
     '{flowcell_id}_{lane_number}',
-    '{cell_sample_id}_{dlp_library_id}_{index_sequence}_{read_end}.fastq{extension}')
+    '{cell_sample_id}_{dlp_library_id}_{index_sequence}_{read_end}.fastq{extension}'
+)
 
 
-def import_gsc_dlp_paired_fastqs(colossus_api,tantalus_api, dlp_library_id, storage, existing_lanes, tag_name):
-    primary_sample_id = colossus_api.query_libraries_by_library_id(dlp_library_id)['sample']['sample_id']
+def import_gsc_dlp_paired_fastqs(
+        colossus_api,
+        tantalus_api,
+        dlp_library_id,
+        storage,
+        existing_lanes,
+        tag_name):
+    primary_sample_id = colossus_api.query_libraries_by_library_id(
+        dlp_library_id)['sample']['sample_id']
     cell_samples = query_colossus_dlp_cell_info(colossus_api, dlp_library_id)
-    rev_comp_overrides = query_colossus_dlp_rev_comp_override(colossus_api, dlp_library_id)
+    rev_comp_overrides = query_colossus_dlp_rev_comp_override(
+        colossus_api,
+        dlp_library_id,
+    )
 
     external_identifier = '{}_{}'.format(primary_sample_id, dlp_library_id)
 
@@ -124,9 +137,15 @@ def import_gsc_dlp_paired_fastqs(colossus_api,tantalus_api, dlp_library_id, stor
     library_infos = gsc_api.query('library?external_identifier={}'.format(external_identifier))
 
     if (library_infos) == 0:
-        raise Exception('no libraries with external_identifier {} in gsc api'.format(external_identifier))
+        raise Exception(
+            'no libraries with external_identifier {} in gsc api'.format(
+                external_identifier)
+        )
     elif len(library_infos) > 1:
-        raise Exception('multiple libraries with external_identifier {} in gsc api'.format(external_identifier))
+        raise Exception(
+            'multiple libraries with external_identifier {} in gsc api'.format(
+                external_identifier)
+        )
 
     library_info = library_infos[0]
 
@@ -165,7 +184,12 @@ def import_gsc_dlp_paired_fastqs(colossus_api,tantalus_api, dlp_library_id, stor
         primer_info = gsc_api.query('primer/{}'.format(primer_id))
         raw_index_sequence = primer_info['adapter_index_sequence']
 
-        logging.info('loading fastq %s, index %s, %s', fastq_info['id'], raw_index_sequence, fastq_path)
+        logging.info(
+            'loading fastq %s, index %s, %s',
+            fastq_info['id'],
+            raw_index_sequence,
+            fastq_path,
+        )
 
         flowcell_lane = flowcell_id
         if lane_number is not None:
@@ -173,7 +197,11 @@ def import_gsc_dlp_paired_fastqs(colossus_api,tantalus_api, dlp_library_id, stor
 
         rev_comp_override = rev_comp_overrides.get(flowcell_lane)
 
-        index_sequence = decode_raw_index_sequence(raw_index_sequence, sequencing_instrument, rev_comp_override)
+        index_sequence = decode_raw_index_sequence(
+            raw_index_sequence,
+            sequencing_instrument,
+            rev_comp_override,
+        )
 
         filename_pattern = fastq_info['file_type']['filename_pattern']
         read_end, passed = filename_pattern_map.get(filename_pattern, (None, None))
@@ -262,7 +290,9 @@ if __name__ == '__main__':
 
     # Query tantalus for existing lanes
     existing_lanes = set()
-    for lane in tantalus_api.list('sequencing_lane', dna_library__library_id=args['dlp_library_id']):
+    for lane in tantalus_api.list(
+            'sequencing_lane',
+            dna_library__library_id=args['dlp_library_id']):
         existing_lanes.add((lane['flowcell_id'], lane['lane_number']))
 
     # Query GSC for FastQs
@@ -273,10 +303,5 @@ if __name__ == '__main__':
         storage,
         existing_lanes,
         tag_name)
-
-    # Check if we skipped all files
-    if not json_to_post:
-        logging.error('no data to import')
-        sys.exit()
 
     logging.info('import succeeded')

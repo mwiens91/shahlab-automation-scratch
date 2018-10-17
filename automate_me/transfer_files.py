@@ -155,7 +155,7 @@ class AzureTransfer(object):
             progress_callback=TransferProgress().print_progress,
             max_connections=1)
 
-        os.chmod(local_filepath, 0444)
+        os.chmod(local_filepath, 0o444)
 
     def _check_file_same_blob(self, file_resource, container, blobname):
         properties = self.block_blob_service.get_blob_properties(container, blobname)

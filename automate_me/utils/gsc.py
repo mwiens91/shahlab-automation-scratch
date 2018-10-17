@@ -27,7 +27,11 @@ class GSCAPI(object):
         }
 
         # TODO: prompt for username and password if none are provided
-        response = self.request_handle.post(create_session_url, json=auth_json, headers=self.headers)
+        response = self.request_handle.post(
+            create_session_url,
+            json=auth_json,
+            headers=self.headers,
+        )
 
         if response.status_code == 200:
             # Add the authentication token to the headers.

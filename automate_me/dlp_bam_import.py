@@ -66,6 +66,7 @@ def get_bam_header_blob(blob_service, container_name, blob_name):
 
 
 def get_bam_header_info(header):
+    # TODO(mwiens91): this isn't being used
     index_info = {}
 
     sample_ids = set()
@@ -132,7 +133,8 @@ def get_created_time_blob(blob_service, container, blobname):
     return created_time
 
 
-def import_dlp_realign_bams(storage_name,
+def import_dlp_realign_bams(
+        storage_name,
         storage_type,
         bam_filenames,
         tantalus_api,
@@ -142,10 +144,20 @@ def import_dlp_realign_bams(storage_name,
 
     if storage_type == 'blob':
         for bam_filename in bam_filenames:
-            metadata.extend(import_dlp_realign_bam_blob(bam_filename, kwargs['blob_container_name']))
+            metadata.extend(
+                import_dlp_realign_bam_blob(
+                    bam_filename,
+                    kwargs['blob_container_name']
+                )
+            )
     elif storage_type == 'server':
         for bam_filename in bam_filenames:
-            metadata.extend(import_dlp_realign_bam_server(bam_filename, kwargs['storage_directory']))
+            metadata.extend(
+                import_dlp_realign_bam_server(
+                    bam_filename,
+                    kwargs['storage_directory']
+                )
+            )
     else:
         raise ValueError('unsupported storage type {}'.format(storage_type))
 

@@ -26,12 +26,12 @@ logging.basicConfig(
 def convert_time(a):
     try:
         return datetime.strptime(a, '%Y-%m-%dT%H:%M:%S')
-    except:
+    except Exception:
         pass
 
     try:
         return datetime.strptime(a, '%Y-%m-%dT%H:%M:%S.%f')
-    except:
+    except Exception:
         pass
 
     raise RuntimeError("Unable to parse %s" % a)
@@ -71,7 +71,13 @@ multiplexed_lane_bam_path_templates = {
     'RNASEQ': '{data_path}/{flowcell_id}_{lane_number}_{adapter_index_sequence}_withJunctionsOnGenome_dupsFlagged.bam',
 }
 
-def get_lane_bam_path(library_type, data_path, flowcell_id, lane_number, adapter_index_sequence=None, compression=None):
+def get_lane_bam_path(
+        library_type,
+        data_path,
+        flowcell_id,
+        lane_number,
+        adapter_index_sequence=None,
+        compression=None):
     if adapter_index_sequence is not None:
         bam_path = multiplexed_lane_bam_path_templates[library_type].format(
             data_path=data_path,
@@ -129,6 +135,7 @@ def get_tantalus_bam_filename(sample, library, lane_infos):
 
 
 def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_spec=False):
+    # TODO(mwiens91): this isn't used anywhere
     library_name = library['library_id']
 
     bai_path = bam_path + '.bai'
@@ -231,6 +238,7 @@ def add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos, is_s
 
 
 def add_gsc_bam_lanes(sample, library, lane_infos):
+    # TODO(mwiens91): sample arg isn't used anywhere
     json_list = []
 
     for lane_info in lane_infos:
@@ -249,7 +257,8 @@ def add_gsc_bam_lanes(sample, library, lane_infos):
     return json_list
 
 
-def import_gsc_library(libraries,
+def import_gsc_library(
+        libraries,
         storage,
         tantalus_api,
         skip_file_import=False,
@@ -258,6 +267,7 @@ def import_gsc_library(libraries,
     """
     Copy GSC libraries to a storage and return metadata json.
     """
+    # TODO(mwiens91): tantalus_api and tag_name not used
 
     json_list = []
 
@@ -272,7 +282,11 @@ def import_gsc_library(libraries,
             protocol_info = gsc_api.query('protocol/{}'.format(library_info['protocol_id']))
 
             if library_info['protocol_id'] not in protocol_id_map:
-                logging.warning('warning, protocol {}:{} not supported'.format(library_info['protocol_id'], protocol_info['extended_name']))
+                logging.warning(
+                    'warning, protocol %s:%s not supported',
+                    library_info['protocol_id'],
+                    protocol_info['extended_name'],
+                )
                 continue
 
             library_type = protocol_id_map[library_info['protocol_id']]
@@ -369,9 +383,22 @@ def import_gsc_library(libraries,
                     # Test for BAM path first, then BAM SpEC path if
                     # no BAM available
                     if os.path.exists(bam_path):
-                        json_list += add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos)
+                        json_list += add_gsc_wgs_bam_dataset(
+                            bam_path,
+                            storage,
+                            sample,
+                            library,
+                            lane_infos,
+                        )
                     elif os.path.exists(bam_spec_path):
-                        json_list += add_gsc_wgs_bam_dataset(bam_spec_path, storage, sample, library, lane_infos, is_spec=True)
+                        json_list += add_gsc_wgs_bam_dataset(
+                            bam_spec_path,
+                            storage,
+                            sample,
+                            library,
+                            lane_infos,
+                            is_spec=True,
+                        )
                     else:
                         raise Exception('missing merged bam file {}'.format(bam_path))
 
@@ -443,9 +470,22 @@ def import_gsc_library(libraries,
                     # Test for BAM path first, then BAM SpEC path if
                     # no BAM available
                     if os.path.exists(bam_path):
-                        json_list += add_gsc_wgs_bam_dataset(bam_path, storage, sample, library, lane_infos)
+                        json_list += add_gsc_wgs_bam_dataset(
+                            bam_path,
+                            storage,
+                            sample,
+                            library,
+                            lane_infos,
+                        )
                     elif os.path.exists(bam_spec_path):
-                        json_list += add_gsc_wgs_bam_dataset(bam_spec_path, storage, sample, library, lane_infos, is_spec=True)
+                        json_list += add_gsc_wgs_bam_dataset(
+                            bam_spec_path,
+                            storage,
+                            sample,
+                            library,
+                            lane_infos,
+                            is_spec=True,
+                        )
                     else:
                         raise Exception('missing lane bam file {}'.format(bam_path))
 
@@ -477,6 +517,7 @@ if __name__ == '__main__':
     json_to_post = import_gsc_library(
         args['libraries'],
         storage,
+        tantalus_api,
         skip_file_import=args.get('skip_file_import'),
         skip_older_than=args.get('skip_older_than'))
 
