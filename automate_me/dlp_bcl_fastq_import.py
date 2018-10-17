@@ -105,7 +105,7 @@ def get_fastq_info(output_dir, flowcell_id, storage_directory):
 
     for filename in filenames:
         match = re.match(
-            "^([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-R(\\d+)-C(\\d+)_S(\\d+)(_L(\\d+))?_R([12])_001.fastq.gz$",
+            r"^(\w+)-(\w+)-R(\d+)-C(\d+)_S(\d+)(_L(\d+))?_R([12])_001.fastq.gz$",
             filename,
         )
 
