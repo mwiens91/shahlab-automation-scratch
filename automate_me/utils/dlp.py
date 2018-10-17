@@ -34,8 +34,13 @@ def fastq_paired_end_check(file_info):
                     read_end, fastq_id))
 
 
-def create_sequence_dataset_models(file_info, storage_name, tag_name, tantalus_api):
-    """ Create tantalus sequence models for a list of files """
+def create_sequence_dataset_models(
+        file_info,
+        storage_name,
+        tag_name,
+        tantalus_api,
+        analysis_id=None,):
+    """Create tantalus sequence models for a list of files."""
     # Get storage and tag PKs
     storage_pk = tantalus_api.get('storage', name=storage_name)['id']
 
@@ -80,6 +85,10 @@ def create_sequence_dataset_models(file_info, storage_name, tag_name, tantalus_a
             sequence_lanes=[],
             file_resources=[],
         )
+
+        # Add in the analysis id if it's provided
+        if analysis_id is not None:
+            sequence_dataset['analysis'] = analysis_id
 
         # Unique set of lanes keyed by flowcell id, lane number
         # TODO(mwiens91): What's this for? It's not used anywhere

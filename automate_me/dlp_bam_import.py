@@ -139,6 +139,7 @@ def import_dlp_realign_bams(
         bam_filenames,
         tantalus_api,
         tag_name=None,
+        analysis_id=None,
         **kwargs):
     metadata = []
 
@@ -161,7 +162,13 @@ def import_dlp_realign_bams(
     else:
         raise ValueError('unsupported storage type {}'.format(storage_type))
 
-    create_sequence_dataset_models(metadata, storage_name, tag_name, tantalus_api)
+    create_sequence_dataset_models(
+        metadata,
+        storage_name,
+        tag_name,
+        analysis_id,
+        tantalus_api,
+    )
 
 
 def import_dlp_realign_bam_blob(bam_filename, container_name):
@@ -285,11 +292,9 @@ if __name__ == '__main__':
         raise RuntimeError(
             "%s is not a recognized storage type" % storage_type)
 
-    # Get the tag name if it was passed in
-    try:
-        tag_name = args['tag_name']
-    except KeyError:
-        tag_name = None
+    # Get optional arguments
+    tag_name = args.get('tag_name')
+    analysis_id = args.get('analysis_id')
 
     # Import DLP BAMs
     import_dlp_realign_bams(
@@ -298,4 +303,6 @@ if __name__ == '__main__':
         args['bam_filenames'],
         tantalus_api,
         blob_container_name=blob_container_name,
-        tag_name=tag_name)
+        tag_name=tag_name,
+        analysis_id=analysis_id,
+    )
