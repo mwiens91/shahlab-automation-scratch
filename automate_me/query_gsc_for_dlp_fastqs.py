@@ -17,8 +17,6 @@ from utils.runtime_args import parse_runtime_args
 from utils.colossus import ColossusApi
 from utils.tantalus import TantalusApi
 
-# Set up the root logger
-logging.basicConfig(format=LOGGING_FORMAT, stream=sys.stdout, level=logging.INFO)
 
 solexa_run_type_map = {"Paired": "P"}
 
@@ -200,6 +198,8 @@ def import_gsc_dlp_paired_fastqs(colossus_api, tantalus_api, dlp_library_id, sto
 
     fastq_file_info = []
 
+    flowcells_to_be_created = []
+
     for fastq_info in fastq_infos:
         fastq_path = fastq_info["data_path"]
 
@@ -317,6 +317,8 @@ def import_gsc_dlp_paired_fastqs(colossus_api, tantalus_api, dlp_library_id, sto
             )
         )
 
+        flowcells_to_be_created.append(flowcell_id + '_' + str(lane_number))
+
     fastq_paired_end_check(fastq_file_info)
 
     create_sequence_dataset_models(
@@ -325,8 +327,12 @@ def import_gsc_dlp_paired_fastqs(colossus_api, tantalus_api, dlp_library_id, sto
 
     logging.info('import succeeded')
 
+    return flowcells_to_be_created
 
 if __name__ == "__main__":
+    # Set up the root logger
+    logging.basicConfig(format=LOGGING_FORMAT, stream=sys.stdout, level=logging.INFO)
+
     # Parse the incoming arguments
     args = parse_runtime_args()
 

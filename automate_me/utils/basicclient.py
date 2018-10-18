@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import coreapi
+import json
 from coreapi.codecs import JSONCodec
 from django.core.serializers.json import DjangoJSONEncoder
 from openapi_codec import OpenAPICodec
@@ -169,3 +170,29 @@ class BasicAPIClient(object):
         return self.coreapi_client.action(
             self.coreapi_schema, [table_name, "create"], params=fields
         )
+
+
+    @staticmethod
+    def join_urls(*pieces):
+        """Join pieces of an URL together safely."""
+        return '/'.join(s.strip('/') for s in pieces) + '/'
+
+    def update(self, table_name, id=None, **fields):
+        """ Create the resource and return it. """
+
+        if id is None:
+            raise ValueError('must specify id of existing model')
+
+        endpoint_url = self.join_urls(self.base_api_url, table_name, str(id))
+
+        payload = json.dumps(fields, cls=DjangoJSONEncoder)
+
+        r = self.session.put(
+            endpoint_url,
+            data=payload)
+
+        if not r.ok:
+            raise Exception('failed with error: "{}", reason: "{}"'.format(
+                r.reason, r.text))
+
+        return r.json()
