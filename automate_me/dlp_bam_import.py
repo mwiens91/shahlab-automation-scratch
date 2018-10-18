@@ -154,7 +154,7 @@ def import_dlp_realign_bams(
         raise ValueError("unsupported storage type {}".format(storage_type))
 
     create_sequence_dataset_models(
-        metadata, storage_name, tag_name, analysis_id, tantalus_api
+        metadata, storage_name, tag_name, tantalus_api, analysis_id
     )
 
 
