@@ -38,10 +38,10 @@ def parse_runtime_args(name=__main__.__file__):
     if args.json != "{}" and args.json_file is not None:
         raise RuntimeError("Specify either JSON xor `.json` file")
 
-    # Return JSON as dictionary
-    if args.json is not None:
-        return json.loads(args.json)
+    # Read from a file if one was specified
+    if args.json_file is not None:
+        with open(args.json_file) as f:
+            return json.load(f)
 
-    # Read from a file
-    with open(args.json_file) as f:
-        return json.load(f)
+    # Just parse what was passed in directly
+    return json.loads(args.json)
