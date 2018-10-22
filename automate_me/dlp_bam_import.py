@@ -140,15 +140,23 @@ def import_dlp_realign_bams(
 ):
     metadata = []
 
+    storage = tantalus_api.get("storage", name=storage_name)
+
     if storage_type == "blob":
         for bam_filename in bam_filenames:
+            blob_container_name = os.path.join(
+                storage["storage_account"], storage["storage_container"]
+            )
             metadata.extend(
-                import_dlp_realign_bam_blob(bam_filename, kwargs["blob_container_name"])
+                import_dlp_realign_bam_blob(bam_filename, blob_container_name)
             )
     elif storage_type == "server":
         for bam_filename in bam_filenames:
+
             metadata.extend(
-                import_dlp_realign_bam_server(bam_filename, kwargs["storage_directory"])
+                import_dlp_realign_bam_server(
+                    bam_filename, storage["storage_directory"]
+                )
             )
     else:
         raise ValueError("unsupported storage type {}".format(storage_type))
@@ -266,17 +274,7 @@ if __name__ == "__main__":
     # Get storage type specific variables
     storage_type = args["storage_type"]
 
-    if storage_type == "server":
-        storage_directory = args["storage_directory"]
-        blob_container_name = None
-
-        assert storage_directory is not None
-    elif storage_type == "blob":
-        blob_container_name = args["blob_container_name"]
-        storage_directory = None
-
-        assert blob_container_name is not None
-    else:
+    if storage_type not in ("blob", "server"):
         raise RuntimeError("%s is not a recognized storage type" % storage_type)
 
     # Get optional arguments
@@ -289,7 +287,6 @@ if __name__ == "__main__":
         args["storage_type"],
         args["bam_filenames"],
         tantalus_api,
-        blob_container_name=blob_container_name,
         tag_name=tag_name,
         analysis_id=analysis_id,
     )
